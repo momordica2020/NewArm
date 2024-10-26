@@ -9,10 +9,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
 using System.Runtime.InteropServices; 
-using Microsoft.Win32; 
+using Microsoft.Win32;
+using Newtonsoft.Json;
+using System.IO;
+using NewArm.Properties;
 
 namespace NewArm
 {
+
+
+
     public partial class Form1 : Form
     {
         private bool getMousePositionRun = true;
@@ -23,6 +29,8 @@ namespace NewArm
         KeyboardHook k_hook;
 
         string filename = "tasks.json";
+        static string fileConfig = "config.json";
+        Config config;
 
         private List<Task> tasks;
         private Task nowTask;
@@ -306,24 +314,11 @@ namespace NewArm
             }
 
 
-            if (e.KeyCode == Keys.A)
+            if (e.KeyCode == config.actKey)
             {
-                if (leftloop) stopLeftMouseClickLoop();
-                else startLeftMouseClickLoop();
+                if (leftloop) stopMouseClickLoop();
+                else startMouseClickLoop();
             }
-
-            //if (e.KeyCode == Keys.Left)
-            //{
-            //    new Thread(zhihuJubao).Start();
-            //}
-            //else if (e.KeyCode == Keys.Right)
-            //{
-            //    new Thread(zhihuJubao2).Start();
-            //}
-            //else if (e.KeyCode == Keys.Down)
-            //{
-            //    new Thread(zhihuJubao3).Start();
-            //}
         }
 
         [System.Runtime.InteropServices.DllImport("user32")]
@@ -380,90 +375,6 @@ namespace NewArm
             }
         }
 
-        public void leftClick()
-        {
-            while (run)
-            {
-                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                Thread.Sleep(1000);
-                mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
-                Thread.Sleep(1000);
-                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-                Thread.Sleep(1000);
-                mouse_event(MOUSEEVENTF_MOVE, -10, -10, 0, 0);
-                Thread.Sleep(1000);
-            }
-        }
-
-        private void printScreen()
-        {
-            
-            //System.Threading.Thread.Sleep(200);
-            Bitmap bit = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
-            Graphics g = Graphics.FromImage(bit);
-            g.CopyFromScreen(new Point(0, 0), new Point(0, 0), bit.Size);
-
-            bit.Save("images/" + num + ".jpg");
-            num++;
-
-            g.Dispose();
-            //this.Visible = true;
-        }
-
-        private void getImage()
-        {
-            num = 1;
-            Thread.Sleep(3000);
-            //this.Visible = false;
-            while (run)
-            {
-                Thread.Sleep(2000);
-                printScreen();
-                Thread.Sleep(300);
-                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-                Thread.Sleep(300);
-                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-            }
-        }
-
-        private void cutTwoImage()
-        {
-            Bitmap limg = new Bitmap(570, 708);
-            Bitmap rimg = new Bitmap(570, 708);
-            Image srcimg = Image.FromFile("images/" + (num / 2 + 1) + ".jpg");
-            
-
-            Graphics g = Graphics.FromImage(limg);
-            g.DrawImage(
-                srcimg, 
-                new Rectangle(0, 0, limg.Width, limg.Height), 
-                new Rectangle(113, 18, limg.Width, limg.Height), 
-                GraphicsUnit.Pixel);
-            limg.Save("images2/" + num + ".jpg");
-            g.Dispose();
-            num++;
-            g = Graphics.FromImage(rimg);
-            g.DrawImage(
-                srcimg,
-                new Rectangle(0, 0, limg.Width, limg.Height),
-                new Rectangle(683, 18, limg.Width, limg.Height),
-                GraphicsUnit.Pixel);
-            rimg.Save("images2/" + num + ".jpg");
-            g.Dispose();
-            num++;
-        }
-
-        private void cutImage()
-        {
-            num = 0;
-            //this.Visible = false;
-            while (run)
-            {
-                //Thread.Sleep(2000);
-                cutTwoImage();
-            }
-        }
-
         double tx = 48.1927710843;
         double ty = 85.4700854701;
 
@@ -506,101 +417,44 @@ namespace NewArm
             mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
         }
 
-        /// <summary>
-        /// 新版举报回答
-        /// </summary>
-        private void zhihuJubao3()
-        {
-            if (run)
-            {
-                int beginx = MousePosition.X;
-                int beginy = MousePosition.Y;
-                mouseLeftClick();
-                Thread.Sleep(200);
-                //mouseClickAtD(0, -30);
-                //Thread.Sleep(300);
-                mouseClickAt(657, 387);
-                Thread.Sleep(100);
-                mouseClickAt(677, 414);
-                Thread.Sleep(100);
-                mouseMoveTo(920, 516);
-                mouseLeftDown();
-                mouseMoveTo(920, 670);
-                mouseLeftUp();
-                mouseClickAt(778, 631);
-
-                mouseMoveTo(beginx, beginy);
-
-            }
-        }
-
-        private void zhihuJubao2()
-        {
-            if (run)
-            {
-                int beginx = MousePosition.X;
-                int beginy = MousePosition.Y;
-                mouseLeftClick();
-                Thread.Sleep(200);
-                mouseClickAtD(0, -30);
-                Thread.Sleep(300);
-                mouseClickAt(657, 387);
-                Thread.Sleep(100);
-                mouseClickAt(677, 414);
-                Thread.Sleep(100);
-                mouseMoveTo(920, 516);
-                mouseLeftDown();
-                mouseMoveTo(920, 670);
-                mouseLeftUp();
-                mouseClickAt(778, 631);
-
-                mouseMoveTo(beginx, beginy);
-                //while (true)
-                //{
-                //    print(string.Format("x:{0},y:{1}", MousePosition.X, MousePosition.Y));
-                //}
-            }
-        }
-
-
-        private void zhihuJubao()
-        {
-            if (run)
-            {
-                //print("开始");
-                int beginx = MousePosition.X;
-                int beginy = MousePosition.Y;
-                mouseLeftClick();
-                mouseClickAt(665, 314);
-                mouseClickAt(665, 380);
-                mouseClickAt(890, 514);
-                Thread.Sleep(200);
-                mouseClickAt(921, 203);
-                mouseMoveTo(beginx, beginy);
-            }
-        }
-
         private bool leftloop = false;
+        //private bool ctrlPressed;
+        //private bool altPressed;
+        //private bool shiftPressed;
+        private Keys currentHotkey;
 
-        private void workLeftMouseClickLoop()
+        private void workMouseClickLoop()
         {
             while (leftloop)
             {
-                mouseLeftDown();
-                Thread.Sleep(50);
-                mouseLeftUp();
-                Thread.Sleep(50);
+                mouseLeftClick();
+                //mouseLeftDown();
+                Thread.Sleep(config.cdTimeMs);
+                //mouseLeftUp();
+                //Thread.Sleep(config.cdTimeMs / 2);
             }
         }
 
-        private void startLeftMouseClickLoop()
+        private void startMouseClickLoop()
         {
             leftloop = true;
-            new Thread(workLeftMouseClickLoop).Start();
+            button6.BackColor = Color.Red;
+            try
+            {
+                Icon = Resources.Icon_act;
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+            new Thread(workMouseClickLoop).Start();
         }
 
-        private void stopLeftMouseClickLoop()
+        private void stopMouseClickLoop()
         {
+            button6.BackColor = Color.Green;
+            try
+            {
+                Icon = Resources.Icon_nav;
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
             leftloop = false;
         }
 
@@ -659,10 +513,11 @@ namespace NewArm
                 stopHook();
                 getMousePositionRun = false;
                 saveTasks();
+                WriteConfig();
             }
-            catch
+            catch(Exception ex)
             {
-
+                Console.WriteLine(ex.ToString());
             }
 
             Environment.Exit(0);
@@ -758,11 +613,180 @@ namespace NewArm
 
         private void button6_Click(object sender, EventArgs e)
         {
-            if (leftloop) stopLeftMouseClickLoop();
-            else startLeftMouseClickLoop();
+            if (leftloop) stopMouseClickLoop();
+            else startMouseClickLoop();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            config.actMouseLeft = checkBox1.Checked;
+            updateConfigToUI();
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            config.actMouseRight = checkBox2.Checked;
+            updateConfigToUI();
         }
 
 
 
+        private void numericUpDown2_ValueChanged(object sender, EventArgs e)
+        {
+            config.cdTimeMs = (int)numericUpDown2.Value;
+            updateConfigToUI();
+        }
+        public void ReadConfig()
+        {
+            try
+            {
+                // 从文件中读取 JSON 字符串
+                if (!File.Exists(fileConfig))
+                {
+                    throw new FileNotFoundException("Configuration file not found.");
+                }
+                string jsonString = File.ReadAllText(fileConfig);
+
+                // 使用 Newtonsoft.Json 反序列化 JSON 字符串到 Config 对象
+                config = JsonConvert.DeserializeObject<Config>(jsonString);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"读取配置文件时出错: {ex.Message}");
+            }
+
+            // 要是没有，就初始化
+            if (config == null)
+            {
+                config = new Config
+                {
+                    actMouseLeft = true,
+                    actMouseRight = false,
+                    actKey = Keys.F1,
+                    cdTimeMs = 50,
+                };
+            }
+        }
+
+        /// <summary>
+        /// 把界面的鼠标连点配置项更新到config里
+        /// </summary>
+        public void updateConfig()
+        {
+            try
+            {
+                string keyString = textBox6.Text;
+
+                if (Enum.TryParse(keyString, true, out Keys key))
+                {
+                    config.actKey = key;
+                }
+                else
+                {
+                    MessageBox.Show($"Invalid key: '{keyString}'. Please enter a valid key name.");
+                }
+
+                config.actMouseLeft = checkBox1.Checked;
+                config.actMouseRight = checkBox2.Checked;
+                config.cdTimeMs = (int)numericUpDown2.Value;
+            }catch(Exception ex)
+            {
+                Console.WriteLine($"更新配置文件时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 把config的鼠标连点配置项更新到UI里
+        /// </summary>
+        public void updateConfigToUI()
+        {
+            try
+            {
+                if (config != null)
+                {
+                    // 输出读取的配置项
+                    checkBox1.Checked = config.actMouseLeft;
+                    checkBox2.Checked = config.actMouseRight;
+                    textBox6.Text = config.actKey.ToString();
+                    numericUpDown2.Value = config.cdTimeMs;
+                    label10.Text = $"（{(1000.0 / config.cdTimeMs).ToString("F2")}次/秒）";
+
+                    textBox6.Text = config.actKey.ToString();
+                    button6.Text = $"{(config.actMouseLeft ? "左" : "")}{(config.actMouseRight ? "右" : "")}连点（{config.actKey.ToString()}）";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        public void WriteConfig()
+        {
+            try
+            {
+                updateConfig();
+                // 将对象序列化为 JSON 字符串
+                string jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
+
+                // 将 JSON 字符串写入文件
+                File.WriteAllText(fileConfig, jsonString);
+
+                //Console.WriteLine("配置文件已成功写入！");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"写入配置文件时出错: {ex.Message}");
+            }
+        }
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            // 读取配置项
+            ReadConfig();
+            updateConfigToUI();
+            
+
+        }
+
+        private void textBox6_KeyDown(object sender, KeyEventArgs e)
+        {
+            //// 检查修饰键 (Ctrl, Alt, Shift)
+            //ctrlPressed = e.Control;
+            //altPressed = e.Alt;
+            //shiftPressed = e.Shift;
+
+            // 将组合键保存到 currentHotkey
+            currentHotkey = e.KeyCode;
+
+            // 显示热键
+            UpdateHotkeyTextBox();
+        }
+
+        private void UpdateHotkeyTextBox()
+        {
+            //string hotkeyDisplay = "";
+
+            //if (ctrlPressed)
+            //    hotkeyDisplay += "Ctrl + ";
+            //if (altPressed)
+            //    hotkeyDisplay += "Alt + ";
+            //if (shiftPressed)
+            //    hotkeyDisplay += "Shift + ";
+
+            //hotkeyDisplay += currentHotkey != Keys.None ? currentHotkey.ToString() : "";
+            config.actKey = currentHotkey;
+        }
+
+        private void textBox6_KeyUp(object sender, KeyEventArgs e)
+        {
+            //if (!e.Control) ctrlPressed = false;
+            //if (!e.Alt) altPressed = false;
+            //if (!e.Shift) shiftPressed = false;
+
+            // 显示热键
+            UpdateHotkeyTextBox();
+            updateConfigToUI();
+        }
     }
 }

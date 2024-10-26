@@ -28,17 +28,29 @@ namespace NewArm
         public static List<Task> getDataFromJson(string fileName)
         {
             List<Task> fi = new List<Task>();
-            Encoding encoding = Encoding.UTF8;
-            using (FileStream file = new FileStream(fileName, FileMode.OpenOrCreate))
+            try
             {
-                StreamReader reader = new StreamReader(file, encoding);
-                var fileContent = DeserializeJsonToList<Task>(reader.ReadToEnd());
-                foreach (var finfo in fileContent)
+                Encoding encoding = Encoding.UTF8;
+                using (FileStream file = new FileStream(fileName, FileMode.OpenOrCreate))
                 {
-                    fi.Add(finfo);
+                    StreamReader reader = new StreamReader(file, encoding);
+                    var fileContent = DeserializeJsonToList<Task>(reader.ReadToEnd());
+                    if (fileContent != null)
+                    {
+                        foreach (var finfo in fileContent)
+                        {
+                            fi.Add(finfo);
+                        }
+                    }
+
+                    reader.Dispose();
                 }
-                reader.Dispose();
             }
+            catch (Exception ex)
+            {
+            }
+
+
             return fi;
         }
 
