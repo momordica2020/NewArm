@@ -11,4 +11,4 @@
 
 #### 平台
 
-Windows with .Net Framework 4.5+
+Windows with .Net 8.0
