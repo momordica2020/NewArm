@@ -48,7 +48,7 @@ namespace NewArm
             //开启捕捉鼠标位置的常驻线程
             new Thread(workGetMousePosition).Start();
 
-            
+
         }
 
         private void loadTasks()
@@ -61,7 +61,7 @@ namespace NewArm
             {
                 tasks = new List<Task>();
             }
-            
+
         }
 
         private void saveTasks()
@@ -74,7 +74,7 @@ namespace NewArm
             {
 
             }
-            
+
         }
 
         private void updateTasks()
@@ -138,7 +138,7 @@ namespace NewArm
         {
             tasks.RemoveAt(index);
             updateTasksView();
-            if (tasks.Count > 0) checkedListBox1.SelectedIndex = index ;
+            if (tasks.Count > 0) checkedListBox1.SelectedIndex = index;
             updateTaskItemView();
         }
 
@@ -242,8 +242,8 @@ namespace NewArm
             {
                 k_hook.Stop();
             }
-            catch 
-            { 
+            catch
+            {
 
             }
         }
@@ -296,7 +296,7 @@ namespace NewArm
 
                     foreach (var item in task.items)
                     {
-                        
+
                         dealTaskItem(item);
                     }
 
@@ -338,8 +338,8 @@ namespace NewArm
         //模拟鼠标中键抬起 
         const int MOUSEEVENTF_MIDDLEUP = 0x0040;
         //标示是否采用绝对坐标 
-        const int MOUSEEVENTF_ABSOLUTE = 0x8000; 
-        
+        const int MOUSEEVENTF_ABSOLUTE = 0x8000;
+
         public void print(string str)
         {
             if (textBox1.InvokeRequired)
@@ -386,7 +386,7 @@ namespace NewArm
 
         private void mouseMoveToD(int dx, int dy)
         {
-            mouse_event(MOUSEEVENTF_MOVE, (int)(1* dx), (int)(1* dy), 0, 0);
+            mouse_event(MOUSEEVENTF_MOVE, (int)(1 * dx), (int)(1 * dy), 0, 0);
             Thread.Sleep(50);
         }
 
@@ -515,7 +515,7 @@ namespace NewArm
                 saveTasks();
                 WriteConfig();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
@@ -552,7 +552,7 @@ namespace NewArm
             {
                 deleteTask(checkedListBox1.SelectedIndex);
             }
-            
+
         }
 
         private void listView1_MouseDown(object sender, MouseEventArgs e)
@@ -565,7 +565,7 @@ namespace NewArm
 
         private void 上移ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(listView1.SelectedItems.Count>0)
+            if (listView1.SelectedItems.Count > 0)
                 changeTaskItemPosition(-1);
         }
 
@@ -581,12 +581,12 @@ namespace NewArm
             {
                 deleteTaskItem(listView1.SelectedIndices[0]);
             }
-            
+
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Command comm=(Command)comboBox1.SelectedIndex;
+            Command comm = (Command)comboBox1.SelectedIndex;
             if (comm == Command.mouseMov || comm == Command.mouseMovStatic)
                 addTaskItem(comm, string.Format("{0} {1}", textBox3.Text, textBox4.Text));
             else
@@ -609,7 +609,7 @@ namespace NewArm
             updateTasksView();
         }
 
-        
+
 
         private void button6_Click(object sender, EventArgs e)
         {
@@ -690,7 +690,8 @@ namespace NewArm
                 config.actMouseLeft = checkBox1.Checked;
                 config.actMouseRight = checkBox2.Checked;
                 config.cdTimeMs = (int)numericUpDown2.Value;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"更新配置文件时出错: {ex.Message}");
             }
@@ -745,7 +746,7 @@ namespace NewArm
             // 读取配置项
             ReadConfig();
             updateConfigToUI();
-            
+
 
         }
 
@@ -787,6 +788,11 @@ namespace NewArm
             // 显示热键
             UpdateHotkeyTextBox();
             updateConfigToUI();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            //Icon = Resources.Icon_blue;
         }
     }
 }
