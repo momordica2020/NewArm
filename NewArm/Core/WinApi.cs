@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace NewArm.Core
 {
@@ -75,8 +78,54 @@ namespace NewArm.Core
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
 
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("gdi32.dll")]
+        private static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDC(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
 
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct MONITORINFO
+        {
+            public uint cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        // 系统 DPI 设置
+        private const int SM_CXSCREEN = 0; // 屏幕宽度
+        private const int SM_CYSCREEN = 1; // 屏幕高度
+        private const int MONITOR_DEFAULTTOPRIMARY = 1;
 
         public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -249,10 +298,6 @@ namespace NewArm.Core
 
         #endregion
 
-        // 系统指标
-        private const int SM_CXSCREEN = 0; // 屏幕宽度
-        private const int SM_CYSCREEN = 1; // 屏幕高度
-
         #region 钩子类型 (WH_*)
         public const int WH_CALLWNDPROC = 4;        // 捕获窗口消息（处理前）
         public const int WH_CALLWNDPROCRET = 12;    // 捕获窗口消息处理后的返回值
@@ -303,7 +348,7 @@ namespace NewArm.Core
 
 
         /// <summary>
-        /// 模拟键盘按下和释放指定虚拟键码
+        /// 键盘按下和释放指定虚拟键码
         /// </summary>
         public static void KeyPress(ushort virtualKey)
         {
@@ -343,6 +388,60 @@ namespace NewArm.Core
             SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
             Thread.Sleep(10); // 确保按键生效
         }
+
+
+        /// <summary>
+        /// 键盘按下指定虚拟键码
+        /// </summary>
+        public static void KeyDown(ushort virtualKey)
+        {
+            INPUT[] inputs = new INPUT[1];
+            // 按下
+            inputs[0] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = virtualKey,
+                        wScan = 0,
+                        dwFlags = 0,
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                }
+            };
+            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+
+        /// <summary>
+        /// 键盘释放指定虚拟键码
+        /// </summary>
+        public static void KeyUp(ushort virtualKey)
+        {
+            INPUT[] inputs = new INPUT[1];
+           
+            // 释放
+            inputs[0] = new INPUT
+            {
+                type = INPUT_KEYBOARD,
+                u = new INPUTUNION
+                {
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = virtualKey,
+                        wScan = 0,
+                        dwFlags = KEYEVENTF_KEYUP,
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                }
+            };
+            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+        }
+
 
         /// <summary>
         /// 模拟输入 Unicode 字符串，绕过输入法
@@ -615,10 +714,218 @@ namespace NewArm.Core
 
 
 
+        [DllImport("gdi32.dll")]
+        private static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+
+
+        private const int DRIVERVERSION = 0;//设备驱动程序版本
+        private const int TECHNOLOGY = 2;
+        private const int HORZSIZE = 4; // 物理屏幕的宽度（毫米）
+        private const int VERTSIZE = 6; // 物理屏幕的高度（毫米）
+        private const int HORZRES = 8; // 水平分辨率
+        private const int VERTRES = 10; // 垂直分辨率
+        private const int BITSPIXEL = 12; // 像素相连颜色位数
+        private const int PLANES = 14;
+        private const int NUMBRUSHES = 16;
+        private const int NUMPENS = 18;
+        private const int NUMMARKERS = 20;
+        private const int NUMFONTS = 22;
+        private const int NUMCOLORS = 24;
+        private const int PDEVICESIZE = 26;
+        private const int CURVECAPS = 28;
+        private const int LINECAPS = 30;
+        private const int POLYGONALCAPS = 32;
+        private const int TEXTCAPS = 34;
+        private const int CLIPCAPS = 36;
+        private const int RASTERCAPS = 38;
+        private const int ASPECTX = 40;
+        private const int ASPECTY = 42;
+        private const int ASPECTXY = 44;
+        private const int SHADEBLENDCAPS = 45;
+        private const int LOGPIXELSX = 88;
+        private const int LOGPIXELSY = 90;
+        private const int SIZEPALETTE = 104;
+        private const int NUMRESERVED = 106;
+        private const int COLORRES = 108;
+        private const int PHYSICALWIDTH = 110;
+        private const int PHYSICALHEIGHT = 111;
+        private const int PHYSICALOFFSETX = 112;
+        private const int PHYSICALOFFSETY = 113;
+        private const int SCALINGFACTORX = 114; // 打印机x轴的比例系数
+        private const int SCALINGFACTORY = 115; // 打印机y轴的比例系数
+        private const int VREFRESH = 116;
+        private const int DESKTOPHORZRES = 118; // 真实水平分辨率
+        private const int DESKTOPVERTRES = 117; // 真实垂直分辨率
+        private const int BLTALIGNMENT = 119;
+
+
+        
+        
+
+        public static (int Width, int Height) GetTrueScreenResolution()
+        {
+            IntPtr hdc = GetDC(IntPtr.Zero); // 获取主屏幕的设备上下文
+            int realWidth = GetDeviceCaps(hdc, DESKTOPHORZRES);
+            int realHeight = GetDeviceCaps(hdc, DESKTOPVERTRES);
+            ReleaseDC(IntPtr.Zero, hdc);
+            return (realWidth, realHeight);
+        }
 
 
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
+        [DllImport("shcore.dll")]
+        private static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+        private const int MDT_EFFECTIVE_DPI = 0;
+
+        
+        /// <summary>
+        /// 获取显示器的 DPI 缩放比例
+        /// 本机150%无法正确取得，故而在此直接返回1.5f
+        /// </summary>
+        /// <param name="hMonitor"></param>
+        /// <returns></returns>
+        public static float GetDpiScale(IntPtr hMonitor = (IntPtr)0)
+        {
+            return 1.5f;
+
+            const int CCHDEVICENAME = 32;
+            const int LOGPIXELSX = 88;
+
+
+
+            IntPtr hdc = GetDC(IntPtr.Zero);
+            int dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+            ReleaseDC(IntPtr.Zero, hdc);
+            return dpi / 96.0f; // 96 是标准 DPI
+        }
+        //public static (uint DpiX, uint DpiY) GetDpiForCurrentMonitor()
+        //{
+        //    var hwnd = IntPtr.Zero; // 使用默认屏幕
+        //    var monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        //    GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, out uint dpiX, out uint dpiY);
+        //    return (dpiX, dpiY);
+        //}
+
+
+
+        public static void drawScreen()
+        {
+            try
+            {
+                // 获取鼠标位置
+                if (!GetCursorPos(out POINT mousePoint))
+                {
+                    Console.WriteLine("无法获取鼠标位置");
+                    return;
+                }
+                // 获取 DPI 缩放比例
+                float dpiScale = GetDpiScale();
+                // 获取物理显示屏长度宽度
+                (int realWidth, int realHeight) = GetTrueScreenResolution();
+                // 计算鼠标在物理尺寸下的真实坐标
+                var realMousePoint = new Point((int)(mousePoint.X * dpiScale),(int)( mousePoint.Y * dpiScale));
+                
+
+                //// 计算显示器尺寸（物理像素）
+                //int width = monitorInfo.rcMonitor.Right - monitorInfo.rcMonitor.Left;
+                //int height = monitorInfo.rcMonitor.Bottom - monitorInfo.rcMonitor.Top;
+
+                // 创建位图捕获屏幕
+                using (Bitmap screenshot = new Bitmap(realWidth, realHeight, PixelFormat.Format32bppArgb))
+                {
+                    using (Graphics g = Graphics.FromImage(screenshot))
+                    {
+                        // 捕获整个显示器屏幕
+                        g.CopyFromScreen(
+                            0,
+                            0,
+                            0,
+                            0,
+                            new Size(realWidth, realHeight),
+                            CopyPixelOperation.SourceCopy
+                        );
+                    }
+
+                    // 标记鼠标位置（红色圆点）
+                    using (Graphics g = Graphics.FromImage(screenshot))
+                    {
+                        // 绘制红色圆点（半径 5 像素）
+                        using (Brush brush = new SolidBrush(Color.Red))
+                        {
+                            int radius = 5;
+                            g.FillEllipse(brush, realMousePoint.X - radius, realMousePoint.Y - radius, radius * 2, radius * 2);
+                        }
+                    }
+
+                    // 保存截图到本地
+                    string outputPath = $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                    screenshot.Save(outputPath, ImageFormat.Png);
+                   // Console.WriteLine($"截图已保存到: {outputPath}");
+                   // Console.WriteLine($"鼠标位置 (物理): ({mousePoint.X}, {mousePoint.Y})");
+                   // Console.WriteLine($"鼠标位置 (相对于显示器): ({relativeX}, {relativeY})");
+                   //Console.WriteLine($"DPI 缩放比例: {dpiScale * 100}%");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发生错误: {ex.Message}");
+            }
+        }
+
+        //private static float GetDpiScale()
+        //{
+        //    using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
+        //    {
+        //        return g.DpiX / 96.0f; // 96 是标准 DPI
+        //    }
+        //}
+
+        public static Color GetColor()
+        {
+            try
+            {
+                // 获取鼠标当前位置
+                // 获取鼠标位置
+                if (GetCursorPos(out POINT mousePoint))
+                {
+                    float dpiScale = GetDpiScale();
+                    (int realWidth, int realHeight) = GetTrueScreenResolution();
+                    var realMousePoint = new Point((int)(mousePoint.X * dpiScale), (int)(mousePoint.Y * dpiScale));
+
+                    IntPtr hdc = GetDC(IntPtr.Zero);
+
+
+                    // 获取像素颜色
+                    uint pixel = GetPixel(hdc, realMousePoint.X, realMousePoint.Y); // 使用原始坐标
+                    ReleaseDC(IntPtr.Zero, hdc);
+
+                    // 提取 RGB 值
+                    byte r = (byte)(pixel & 0xFF);
+                    byte g = (byte)((pixel >> 8) & 0xFF);
+                    byte b = (byte)((pixel >> 16) & 0xFF);
+                    return Color.FromArgb(r, g, b);
+
+                    //Console.WriteLine($"鼠标位置 (物理): ({point.X}, {point.Y})");
+                    //Console.WriteLine($"鼠标位置 (逻辑): ({logicalX}, {logicalY})");
+                    //Console.WriteLine($"RGB 颜色值: ({r}, {g}, {b})");
+                    //Console.WriteLine($"DPI 缩放比例: {dpiScale * 100}%");
+                }
+                else
+                {
+                    Console.WriteLine("无法获取鼠标位置");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"发生错误: {ex.Message}");
+            }
+            return Color.White;
+        }
 
 
 

@@ -69,6 +69,13 @@ namespace NewArm
 
             Init(typeof(LeftClicks), new TaskConfig { triggerCodes = [WinApi.VK_F2], interval = config.cdTimeMs });
             Init(typeof(Penren), new TaskConfig { triggerCodes = [WinApi.VK_F9], interval = 500, param = ["words.txt"] });
+            Init(typeof(AutoPaint), new TaskConfig { triggerCodes = [WinApi.VK_F4], interval = 100 });
+            Init(typeof(DragMouse), new TaskConfig { triggerCodes = [WinApi.VK_LCONTROL, WinApi.VK_SPACE], interval = 1 });
+
+
+
+
+
             //timerTasks["LeftClicks"] = new LeftClicks(dealLog);
             //timerTasks["Penren"] = new Penren(dealLog);
 
@@ -95,32 +102,35 @@ namespace NewArm
         {
             Invoke(new Action(() =>
             {
-                if (LogTextbox.Text.Length > 30000) LogTextbox.Text = LogTextbox.Text.Substring(-30000);
+                int maxlen = 30000;
+                LogTextbox.Text = LogTextbox.Text.Length <= maxlen ? LogTextbox.Text : LogTextbox.Text.Substring(LogTextbox.Text.Length - maxlen, maxlen);
                 LogTextbox.AppendText(text);
             }));
         }
 
         public void dealStart(string name)
         {
-            if(name == "LeftClicks")
+            if (name == "LeftClicks")
             {
                 button6.BackColor = Color.Red;
                 try
                 {
                     Icon = Resources.Icon_act;
-                } catch { }
+                }
+                catch { }
             }
         }
 
         public void dealStop(string name)
         {
-            if(name == "LeftClicks")
+            if (name == "LeftClicks")
             {
                 button6.BackColor = Color.Green;
                 try
                 {
                     Icon = Resources.Icon_nav;
-                }catch { }
+                }
+                catch { }
             }
         }
 
@@ -130,7 +140,7 @@ namespace NewArm
         /// <param name="taskName"></param>
         public void Trigger(string taskName)
         {
-            if (timerTasks.TryGetValue(taskName,out var task))
+            if (timerTasks.TryGetValue(taskName, out var task))
             {
                 if (task.isRunning) task.Stop();
                 else task.Start();
@@ -153,7 +163,7 @@ namespace NewArm
             {
                 timerTasks[task.Name].Stop();
             }
-            if(config!=null) timerTasks[task.Name].Init(config);
+            if (config != null) timerTasks[task.Name].Init(config);
         }
 
         public void Print(string str)
@@ -194,7 +204,7 @@ namespace NewArm
 
 
 
-                
+
             }
             catch
             {
@@ -207,7 +217,7 @@ namespace NewArm
 
 
 
-        
+
         private void saveTasks()
         {
             try
@@ -431,7 +441,7 @@ namespace NewArm
 
         }
 
-        
+
 
 
 
@@ -447,14 +457,14 @@ namespace NewArm
         //double tx = 48.1927710843;
         //double ty = 85.4700854701;
 
-      
+
 
         //private bool ctrlPressed;
         //private bool altPressed;
         //private bool shiftPressed;
         private Keys currentHotkey;
 
-       
+
 
 
 
@@ -784,13 +794,10 @@ namespace NewArm
             //Icon = Resources.Icon_blue;
         }
 
-
-
-
-
-
-
-
-
+        private void button7_Click(object sender, EventArgs e)
+        {
+            var paintArea = new Rectangle(50, 150, 1600, 1000);
+            //var targets = ScreenVision.FindTargetsOnScreen(paintArea, Util.GetMousColor(), 3, new Size(5, 5), new Size(35, 35));
+        }
     }
 }

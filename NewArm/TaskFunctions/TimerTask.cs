@@ -27,11 +27,16 @@ namespace NewArm
         public TaskConfig Config;
         private Timer _timer;
 
+        private int _cd_interval = 300;
+        private DateTime _last_trigger_time = DateTime.Now;
+
         //public string[] trigger_Codes;
         private Dictionary<ushort, bool> trigger_state;
 
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        //private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
         public delegate void Log(LogInfo msg);
+
+        private readonly WinApi.LowLevelKeyboardProc _keyboardProcDelegate;
 
         private Log _log;
         protected void log(LogInfo msg)
@@ -47,6 +52,7 @@ namespace NewArm
             //_cts = new CancellationTokenSource();
             _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
             _log = __log;
+            _keyboardProcDelegate = KeyboardProc; // 保存委托引用
         }
 
         public void Start()
@@ -103,7 +109,7 @@ namespace NewArm
             using (var curProcess = System.Diagnostics.Process.GetCurrentProcess())
             using (var curModule = curProcess.MainModule)
             {
-                _hookId = WinApi.SetWindowsHookEx(WinApi.WH_KEYBOARD_LL, KeyboardProc, KeyboardHook.GetModuleHandle(curModule.ModuleName), 0);
+                _hookId = WinApi.SetWindowsHookEx(WinApi.WH_KEYBOARD_LL, _keyboardProcDelegate, KeyboardHook.GetModuleHandle(curModule.ModuleName), 0);
             }
 
             _init();
@@ -133,8 +139,13 @@ namespace NewArm
             {
                 _work();
 
-                // 重新设置定时器
-                _timer.Change(Config.interval, Timeout.Infinite);
+                if (isRunning)
+                {
+                    // 重新设置定时器
+                    _timer.Change(Config.interval, Timeout.Infinite);
+                }
+
+                
             }
             catch (Exception ex)
             {
@@ -145,20 +156,27 @@ namespace NewArm
 
         private nint KeyboardProc(int nCode, nint wParam, nint lParam)
         {
+            
             if (nCode >= 0 && wParam == (uint)WinApi.WM_KEYDOWN)
             {
+                
                 ushort vkCode = (ushort)Marshal.ReadInt32(lParam);
+                //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Down"));
                 if (trigger_state.ContainsKey(vkCode))
                 {
                     trigger_state[vkCode] = true;
+                    
                 }
             }
             else if(nCode >= 0 && wParam == (ushort)WinApi.WM_KEYUP)
             {
+                
                 ushort vkCode = (ushort)Marshal.ReadInt32(lParam);
-                if(trigger_state.ContainsKey(vkCode))
+                //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Up"));
+                if (trigger_state.ContainsKey(vkCode))
                 {
                     trigger_state[vkCode] = false;
+                    
                 }
             }
             bool trigger = true;
@@ -172,11 +190,16 @@ namespace NewArm
             }
             if (trigger)
             {
-                if (isRunning)
-                    Stop();
-                else
-                    Start();
+                if ((DateTime.Now - _last_trigger_time).TotalMilliseconds > _cd_interval)
+                {
+                    _last_trigger_time = DateTime.Now;
+                    if (isRunning)
+                        Stop();
+                    else
+                        Start();
+                }
             }
+            //return (IntPtr)0;
             return WinApi.CallNextHookEx((int)_hookId, nCode, (int)wParam, lParam);
         }
     }

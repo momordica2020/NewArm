@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NewArm.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +21,7 @@ namespace NewArm.TaskFunctions.tasks
 
         protected override void _work()
         {
-            
+            WinApi.Click("left", Config.interval);
         }
     }
 }

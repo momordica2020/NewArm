@@ -40,11 +40,13 @@ namespace NewArm.TaskFunctions.tasks
 
         protected override void _work()
         {
+            if (!isRunning) return;
             if (_count >= 10)
             {
                 Stop();
                 return;
             }
+            _count++;
             string randomLine = _lines[_random.Next(_lines.Length)];
             WinApi.TextInput(randomLine);
             WinApi.KeyPress(WinApi.VK_RETURN);

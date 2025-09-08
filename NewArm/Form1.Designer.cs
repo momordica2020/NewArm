@@ -77,6 +77,7 @@
             comboBox2 = new System.Windows.Forms.ComboBox();
             label5 = new System.Windows.Forms.Label();
             textBox2 = new System.Windows.Forms.TextBox();
+            button7 = new System.Windows.Forms.Button();
             contextMenuStrip1.SuspendLayout();
             contextMenuStrip2.SuspendLayout();
             tabControl2.SuspendLayout();
@@ -155,6 +156,7 @@
             // tabPage4
             // 
             tabPage4.BackColor = System.Drawing.Color.Transparent;
+            tabPage4.Controls.Add(button7);
             tabPage4.Controls.Add(LogTextbox);
             tabPage4.Controls.Add(panel1);
             tabPage4.Location = new System.Drawing.Point(4, 30);
@@ -584,6 +586,16 @@
             textBox2.Size = new System.Drawing.Size(151, 29);
             textBox2.TabIndex = 26;
             // 
+            // button7
+            // 
+            button7.Location = new System.Drawing.Point(714, 49);
+            button7.Name = "button7";
+            button7.Size = new System.Drawing.Size(75, 23);
+            button7.TabIndex = 21;
+            button7.Text = "button7";
+            button7.UseVisualStyleBackColor = true;
+            button7.Click += button7_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -668,6 +680,7 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox LogTextbox;
+        private System.Windows.Forms.Button button7;
     }
 }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,6 +46,28 @@ namespace NewArm.Core
             else if (key == Keys.D8) return 12;
             else if (key == Keys.D9) return 13;
             else return 0;
+        }
+
+
+        /// <summary>
+        /// 获取鼠标当前位置的RGB颜色值
+        /// </summary>
+        /// <returns></returns>
+        public static Color GetMousColor()
+        {
+            // 获取当前鼠标位置
+            Point mousePosition = Cursor.Position;
+
+            // 截取1x1像素的屏幕区域（即鼠标所在点）
+            using var bitmap = new Bitmap(1, 1);
+            using (var graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.CopyFromScreen(mousePosition.X, mousePosition.Y, 0, 0, new Size(1, 1));
+            }
+
+            // 获取像素的RGB值
+            Color pixelColor = bitmap.GetPixel(0, 0);
+            return pixelColor;
         }
     }
 }
