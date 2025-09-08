@@ -9,14 +9,14 @@ namespace NewArm
 {
     public class Task
     {
-        public string name = String.Empty;
+        public string name = string.Empty;
         public List<TaskItem> items = new List<TaskItem>();
         public bool isRun;
         public Keys hotKey;
 
         public Task()
         {
-            name=String.Empty;
+            name= string.Empty;
             items=new List<TaskItem>();
             isRun=false;
         }

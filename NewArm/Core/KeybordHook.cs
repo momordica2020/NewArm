@@ -5,19 +5,19 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Reflection;
 
-namespace NewArm
+namespace NewArm.Core
 {
     /// <summary>
-    /// 键盘钩子
+    /// 键盘钩子(已废弃）
     /// [以下代码来自某网友，并非本人原创]
     /// </summary>
-    class KeyboardHook
+    public class KeyboardHook
     {
         public event KeyEventHandler KeyDownEvent;
         public event KeyPressEventHandler KeyPressEvent;
         public event KeyEventHandler KeyUpEvent;
 
-        public delegate int HookProc(int nCode, Int32 wParam, IntPtr lParam);
+        public delegate int HookProc(int nCode, int wParam, nint lParam);
         static int hKeyboardHook = 0; //声明键盘钩子处理的初始值
         //值在Microsoft SDK的Winuser.h里查询
         // http://www.bianceng.cn/Programming/csharp/201410/45484.htm
@@ -35,7 +35,7 @@ namespace NewArm
         }
         //使用此功能，安装了一个钩子
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
+        public static extern int SetWindowsHookEx(int idHook, HookProc lpfn, nint hInstance, int threadId);
 
 
         //调用此函数卸载钩子
@@ -45,7 +45,7 @@ namespace NewArm
 
         //使用此功能，通过信息钩子继续下一个钩子
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int CallNextHookEx(int idHook, int nCode, Int32 wParam, IntPtr lParam);
+        public static extern int CallNextHookEx(int idHook, int nCode, int wParam, nint lParam);
 
         // 取得当前线程编号（线程钩子需要用到）
         [DllImport("kernel32.dll")]
@@ -53,7 +53,7 @@ namespace NewArm
 
         //使用WINDOWS API函数代替获取当前实例的函数,防止钩子失效
         [DllImport("kernel32.dll")]
-        public static extern IntPtr GetModuleHandle(string name);
+        public static extern nint GetModuleHandle(string name);
 
         public void Start()
         {
@@ -96,7 +96,7 @@ namespace NewArm
                 hKeyboardHook = 0;
             }
 
-            if (!(retKeyboard)) throw new Exception("卸载钩子失败！");
+            if (!retKeyboard) throw new Exception("卸载钩子失败！");
         }
         //ToAscii职能的转换指定的虚拟键码和键盘状态的相应字符或字符
         [DllImport("user32")]
@@ -119,10 +119,10 @@ namespace NewArm
         private const int WM_SYSKEYDOWN = 0x104;//SYSKEYDOWN
         private const int WM_SYSKEYUP = 0x105;//SYSKEYUP
 
-        private int KeyboardHookProc(int nCode, Int32 wParam, IntPtr lParam)
+        public int KeyboardHookProc(int nCode, int wParam, nint lParam)
         {
             // 侦听键盘事件
-            if ((nCode >= 0) && (KeyDownEvent != null || KeyUpEvent != null || KeyPressEvent != null))
+            if (nCode >= 0 && (KeyDownEvent != null || KeyUpEvent != null || KeyPressEvent != null))
             {
                 KeyboardHookStruct MyKeyboardHookStruct = (KeyboardHookStruct)Marshal.PtrToStructure(lParam, typeof(KeyboardHookStruct));
                 // raise KeyDown
@@ -160,6 +160,9 @@ namespace NewArm
             //如果返回0或调用CallNextHookEx函数则消息出了这个钩子继续往下传递，也就是传给消息真正的接受者
             return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
         }
+
+
+       
         ~KeyboardHook()
         {
             Stop();

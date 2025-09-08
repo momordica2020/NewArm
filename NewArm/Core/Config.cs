@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace NewArm
+namespace NewArm.Core
 {
     public class Config
     {

@@ -1,18 +1,23 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using NewArm.Core;
+using NewArm.Properties;
+using NewArm.TaskFunctions;
+using NewArm.TaskFunctions.tasks;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
-using System.Runtime.InteropServices; 
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System.IO;
-using NewArm.Properties;
+using static NewArm.TimerTask;
 
 namespace NewArm
 {
@@ -35,6 +40,10 @@ namespace NewArm
         private List<Task> tasks;
         private Task nowTask;
 
+
+        public Dictionary<string, TimerTask> timerTasks = new Dictionary<string, TimerTask>();
+
+
         public Form1()
         {
             InitializeComponent();
@@ -51,11 +60,141 @@ namespace NewArm
 
         }
 
+
+        private void Form1_Shown(object sender, EventArgs e)
+        {
+            // 读取配置项
+            ReadConfig();
+            updateConfigToUI();
+
+            Init(typeof(LeftClicks), new TaskConfig { triggerCodes = [WinApi.VK_F2], interval = config.cdTimeMs });
+            Init(typeof(Penren), new TaskConfig { triggerCodes = [WinApi.VK_F9], interval = 500, param = ["words.txt"] });
+            //timerTasks["LeftClicks"] = new LeftClicks(dealLog);
+            //timerTasks["Penren"] = new Penren(dealLog);
+
+        }
+
+        /// <summary>
+        /// 处理来自task的日志信息，包括模块启动、结束ui界面的相关更新
+        /// </summary>
+        /// <param name="log"></param>
+        public void dealLog(LogInfo log)
+        {
+            string res = log.text;
+            Invoke(new Action(() =>
+            {
+                if (log.type == LogType.Start) { res = $"启动 {res}"; dealStart(log.taskName); }
+                else if (log.type == LogType.Stop) { res = $"停止 {res}"; dealStop(log.taskName); }
+                res = $"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}]{log.taskName} {res}\r\n";
+            }));
+            printLog(res);
+        }
+
+
+        public void printLog(string text)
+        {
+            Invoke(new Action(() =>
+            {
+                if (LogTextbox.Text.Length > 30000) LogTextbox.Text = LogTextbox.Text.Substring(-30000);
+                LogTextbox.AppendText(text);
+            }));
+        }
+
+        public void dealStart(string name)
+        {
+            if(name == "LeftClicks")
+            {
+                button6.BackColor = Color.Red;
+                try
+                {
+                    Icon = Resources.Icon_act;
+                } catch { }
+            }
+        }
+
+        public void dealStop(string name)
+        {
+            if(name == "LeftClicks")
+            {
+                button6.BackColor = Color.Green;
+                try
+                {
+                    Icon = Resources.Icon_nav;
+                }catch { }
+            }
+        }
+
+        /// <summary>
+        /// 直接激活特定进程
+        /// </summary>
+        /// <param name="taskName"></param>
+        public void Trigger(string taskName)
+        {
+            if (timerTasks.TryGetValue(taskName,out var task))
+            {
+                if (task.isRunning) task.Stop();
+                else task.Start();
+            }
+            else
+            {
+                dealLog(LogInfo.Info($"{taskName}不存在"));
+            }
+
+        }
+
+        public void Init(Type task, TaskConfig config = null)
+        {
+            if (!timerTasks.ContainsKey(task.Name))
+            {
+                timerTasks[task.Name] = (TimerTask)(Activator.CreateInstance(task, args: [(Log)dealLog]));
+
+            }
+            else
+            {
+                timerTasks[task.Name].Stop();
+            }
+            if(config!=null) timerTasks[task.Name].Init(config);
+        }
+
+        public void Print(string str)
+        {
+            if (textBox1.InvokeRequired)
+            {
+                sendStringDelegate mevent = new sendStringDelegate(Print);
+                Invoke(mevent, (object)str);
+            }
+            else
+            {
+                textBox1.AppendText(str + "\r\n");
+            }
+        }
+
+
+        public void PrintLabel(string str)
+        {
+            if (label5.InvokeRequired)
+            {
+                sendStringDelegate mevent = new sendStringDelegate(PrintLabel);
+                Invoke(mevent, (object)str);
+            }
+            else
+            {
+                label5.Text = str;
+            }
+        }
+
+        #region old_tasks
+
+
         private void loadTasks()
         {
             try
             {
                 tasks = IOController.getDataFromJson(filename);
+
+
+
+                
             }
             catch
             {
@@ -64,6 +203,11 @@ namespace NewArm
 
         }
 
+
+
+
+
+        
         private void saveTasks()
         {
             try
@@ -115,7 +259,7 @@ namespace NewArm
             {
                 if (nowTask == null) return;
                 textBox2.Text = nowTask.name;
-                comboBox2.SelectedIndex = key2int(nowTask.hotKey);
+                comboBox2.SelectedIndex = Util.key2int(nowTask.hotKey);
                 listView1.Items.Clear();
                 foreach (var i in nowTask.items)
                 {
@@ -178,47 +322,69 @@ namespace NewArm
         private void updateTaskItem()
         {
             nowTask.name = textBox2.Text;
-            nowTask.hotKey = str2key(comboBox2.SelectedItem.ToString());
+            nowTask.hotKey = Util.str2key(comboBox2.SelectedItem.ToString());
         }
 
-        private static Keys str2key(string str)
+
+        private void dealTaskItem(TaskItem item)
         {
-            if (str == "left") return Keys.Left;
-            else if (str == "right") return Keys.Right;
-            else if (str == "down") return Keys.Down;
-            else if (str == "up") return Keys.Up;
-            else if (str == "0") return Keys.D0;
-            else if (str == "1") return Keys.D1;
-            else if (str == "2") return Keys.D2;
-            else if (str == "3") return Keys.D3;
-            else if (str == "4") return Keys.D4;
-            else if (str == "5") return Keys.D5;
-            else if (str == "6") return Keys.D6;
-            else if (str == "7") return Keys.D7;
-            else if (str == "8") return Keys.D8;
-            else if (str == "9") return Keys.D9;
-            else return Keys.Space;
+            switch (item.command)
+            {
+                case Command.mouseMovStatic:
+                    int x = 0;
+                    int y = 0;
+                    int.TryParse(item.args.Split(' ')[0], out x);
+                    int.TryParse(item.args.Split(' ')[1], out y);
+                    WinApi.MouseMoveAbsolute(x, y);
+                    break;
+                case Command.mouseMov:
+                    int dx = 0;
+                    int dy = 0;
+                    int.TryParse(item.args.Split(' ')[0], out dx);
+                    int.TryParse(item.args.Split(' ')[1], out dy);
+                    WinApi.MouseMove(dx, dy);
+                    break;
+                case Command.mouseLC:
+                    WinApi.Click("left");
+                    break;
+                case Command.mouseLD:
+                    WinApi.MouseDown("left");
+                    break;
+                case Command.mouseLU:
+                    WinApi.MouseUp("left");
+                    break;
+                case Command.wait:
+                    int time = 0;
+                    int.TryParse(item.args, out time);
+                    Thread.Sleep(time);
+                    break;
+                default:
+                    break;
+            }
         }
 
-        private static int key2int(Keys key)
+        private void dealTask(Keys key)
         {
-            if (key == Keys.Left) return 0;
-            else if (key == Keys.Right) return 1;
-            else if (key == Keys.Up) return 2;
-            else if (key == Keys.Down) return 3;
-            else if (key == Keys.D0) return 4;
-            else if (key == Keys.D1) return 5;
-            else if (key == Keys.D2) return 6;
-            else if (key == Keys.D3) return 7;
-            else if (key == Keys.D4) return 8;
-            else if (key == Keys.D5) return 9;
-            else if (key == Keys.D6) return 10;
-            else if (key == Keys.D7) return 11;
-            else if (key == Keys.D8) return 12;
-            else if (key == Keys.D9) return 13;
-            else return 0;
+            foreach (var task in tasks)
+            {
+                if (task.isRun && task.hotKey == key)
+                {
+                    int beginx = MousePosition.X;
+                    int beginy = MousePosition.Y;
+
+                    foreach (var item in task.items)
+                    {
+
+                        dealTaskItem(item);
+                    }
+
+                    WinApi.MouseMove(beginx, beginy);
+                }
+            }
         }
 
+
+        #endregion
 
 
 
@@ -248,63 +414,6 @@ namespace NewArm
             }
         }
 
-        private void dealTaskItem(TaskItem item)
-        {
-            switch (item.command)
-            {
-                case Command.mouseMovStatic:
-                    int x = 0;
-                    int y = 0;
-                    int.TryParse(item.args.Split(' ')[0], out x);
-                    int.TryParse(item.args.Split(' ')[1], out y);
-                    mouseMoveTo(x, y);
-                    break;
-                case Command.mouseMov:
-                    int dx = 0;
-                    int dy = 0;
-                    int.TryParse(item.args.Split(' ')[0], out dx);
-                    int.TryParse(item.args.Split(' ')[1], out dy);
-                    mouseMoveToD(dx, dy);
-                    break;
-                case Command.mouseLC:
-                    mouseLeftClick();
-                    break;
-                case Command.mouseLD:
-                    mouseLeftDown();
-                    break;
-                case Command.mouseLU:
-                    mouseLeftUp();
-                    break;
-                case Command.wait:
-                    int time = 0;
-                    int.TryParse(item.args, out time);
-                    Thread.Sleep(time);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void dealTask(Keys key)
-        {
-            foreach (var task in tasks)
-            {
-                if (task.isRun && task.hotKey == key)
-                {
-                    int beginx = MousePosition.X;
-                    int beginy = MousePosition.Y;
-
-                    foreach (var item in task.items)
-                    {
-
-                        dealTaskItem(item);
-                    }
-
-                    mouseMoveTo(beginx, beginy);
-                }
-            }
-        }
-
         private void hook_KeyDown(object sender, KeyEventArgs e)
         {
             //if (e.KeyValue == (int)Keys.A && (int)Control.ModifierKeys == (int)Keys.Alt)
@@ -314,151 +423,38 @@ namespace NewArm
             }
 
 
-            if (e.KeyCode == config.actKey)
-            {
-                if (leftloop) stopMouseClickLoop();
-                else startMouseClickLoop();
-            }
+            //if (e.KeyCode == config.actKey)
+            //{
+            //    if (leftloop) stopMouseClickLoop();
+            //    else startMouseClickLoop();
+            //}
+
         }
 
-        [System.Runtime.InteropServices.DllImport("user32")]
-        private static extern int mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
-        //移动鼠标 
-        const int MOUSEEVENTF_MOVE = 0x0001;
-        //模拟鼠标左键按下 
-        const int MOUSEEVENTF_LEFTDOWN = 0x0002;
-        //模拟鼠标左键抬起 
-        const int MOUSEEVENTF_LEFTUP = 0x0004;
-        //模拟鼠标右键按下 
-        const int MOUSEEVENTF_RIGHTDOWN = 0x0008;
-        //模拟鼠标右键抬起 
-        const int MOUSEEVENTF_RIGHTUP = 0x0010;
-        //模拟鼠标中键按下 
-        const int MOUSEEVENTF_MIDDLEDOWN = 0x0020;
-        //模拟鼠标中键抬起 
-        const int MOUSEEVENTF_MIDDLEUP = 0x0040;
-        //标示是否采用绝对坐标 
-        const int MOUSEEVENTF_ABSOLUTE = 0x8000;
+        
 
-        public void print(string str)
-        {
-            if (textBox1.InvokeRequired)
-            {
-                sendStringDelegate mevent = new sendStringDelegate(print);
-                Invoke(mevent, (object)str);
-            }
-            else
-            {
-                textBox1.AppendText(str + "\r\n");
-            }
-        }
 
-        public void printLabel(string str)
-        {
-            if (label5.InvokeRequired)
-            {
-                sendStringDelegate mevent = new sendStringDelegate(printLabel);
-                Invoke(mevent, (object)str);
-            }
-            else
-            {
-                label5.Text = str;
-            }
-        }
 
         public void workGetMousePosition()
         {
             while (getMousePositionRun)
             {
-                printLabel(string.Format("x:{0},y:{1}", MousePosition.X, MousePosition.Y));
+                PrintLabel(string.Format("x:{0},y:{1}", MousePosition.X, MousePosition.Y));
                 Thread.Sleep(500);
             }
         }
 
-        double tx = 48.1927710843;
-        double ty = 85.4700854701;
+        //double tx = 48.1927710843;
+        //double ty = 85.4700854701;
 
-        private void mouseMoveTo(int x, int y)
-        {
-            mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE, (int)(x * tx), (int)(y * ty), 0, 0);
-            Thread.Sleep(50);
-        }
+      
 
-        private void mouseMoveToD(int dx, int dy)
-        {
-            mouse_event(MOUSEEVENTF_MOVE, (int)(1 * dx), (int)(1 * dy), 0, 0);
-            Thread.Sleep(50);
-        }
-
-        private void mouseLeftClick()
-        {
-            mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-        }
-
-        private void mouseClickAt(int x, int y)
-        {
-            mouseMoveTo(x, y);
-            mouseLeftClick();
-        }
-
-        private void mouseClickAtD(int dx, int dy)
-        {
-            mouseMoveToD(dx, dy);
-            mouseLeftClick();
-        }
-
-        private void mouseLeftDown()
-        {
-            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-        }
-
-        private void mouseLeftUp()
-        {
-            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-        }
-
-        private bool leftloop = false;
         //private bool ctrlPressed;
         //private bool altPressed;
         //private bool shiftPressed;
         private Keys currentHotkey;
 
-        private void workMouseClickLoop()
-        {
-            while (leftloop)
-            {
-                mouseLeftClick();
-                //mouseLeftDown();
-                Thread.Sleep(config.cdTimeMs);
-                //mouseLeftUp();
-                //Thread.Sleep(config.cdTimeMs / 2);
-            }
-        }
-
-        private void startMouseClickLoop()
-        {
-            leftloop = true;
-            button6.BackColor = Color.Red;
-            try
-            {
-                Icon = Resources.Icon_act;
-            }
-            catch (Exception ex) { Console.WriteLine(ex.Message); }
-            new Thread(workMouseClickLoop).Start();
-        }
-
-        private void stopMouseClickLoop()
-        {
-            button6.BackColor = Color.Green;
-            try
-            {
-                Icon = Resources.Icon_nav;
-            }
-            catch (Exception ex) { Console.WriteLine(ex.Message); }
-            leftloop = false;
-        }
-
-
+       
 
 
 
@@ -495,13 +491,13 @@ namespace NewArm
             if (run)
             {
                 run = false;
-                print("已中止热键响应.");
+                Print("已中止热键响应.");
                 button1.Text = "激活";
             }
             else
             {
                 run = true;
-                print("开始响应热键.");
+                Print("开始响应热键.");
                 button1.Text = "停止";
             }
         }
@@ -613,8 +609,8 @@ namespace NewArm
 
         private void button6_Click(object sender, EventArgs e)
         {
-            if (leftloop) stopMouseClickLoop();
-            else startMouseClickLoop();
+            Init(typeof(LeftClicks), new TaskConfig { triggerCodes = [(ushort)config.actKey], interval = config.cdTimeMs });
+            Trigger(typeof(LeftClicks).Name);
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
@@ -741,14 +737,7 @@ namespace NewArm
                 Console.WriteLine($"写入配置文件时出错: {ex.Message}");
             }
         }
-        private void Form1_Shown(object sender, EventArgs e)
-        {
-            // 读取配置项
-            ReadConfig();
-            updateConfigToUI();
 
-
-        }
 
         private void textBox6_KeyDown(object sender, KeyEventArgs e)
         {
@@ -794,5 +783,14 @@ namespace NewArm
         {
             //Icon = Resources.Icon_blue;
         }
+
+
+
+
+
+
+
+
+
     }
 }
