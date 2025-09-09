@@ -38,6 +38,10 @@
             删除ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tabControl2 = new System.Windows.Forms.TabControl();
             tabPage4 = new System.Windows.Forms.TabPage();
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            LabelHotkey = new System.Windows.Forms.ToolStripStatusLabel();
+            LabelMouse = new System.Windows.Forms.ToolStripStatusLabel();
+            button7 = new System.Windows.Forms.Button();
             LogTextbox = new System.Windows.Forms.TextBox();
             panel1 = new System.Windows.Forms.Panel();
             label10 = new System.Windows.Forms.Label();
@@ -77,11 +81,13 @@
             comboBox2 = new System.Windows.Forms.ComboBox();
             label5 = new System.Windows.Forms.Label();
             textBox2 = new System.Windows.Forms.TextBox();
-            button7 = new System.Windows.Forms.Button();
+            labelMouseDPS = new System.Windows.Forms.ToolStripStatusLabel();
+            labelKeyDPS = new System.Windows.Forms.ToolStripStatusLabel();
             contextMenuStrip1.SuspendLayout();
             contextMenuStrip2.SuspendLayout();
             tabControl2.SuspendLayout();
             tabPage4.SuspendLayout();
+            statusStrip1.SuspendLayout();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
             tabPage5.SuspendLayout();
@@ -156,6 +162,7 @@
             // tabPage4
             // 
             tabPage4.BackColor = System.Drawing.Color.Transparent;
+            tabPage4.Controls.Add(statusStrip1);
             tabPage4.Controls.Add(button7);
             tabPage4.Controls.Add(LogTextbox);
             tabPage4.Controls.Add(panel1);
@@ -166,6 +173,37 @@
             tabPage4.TabIndex = 0;
             tabPage4.Text = "基本连点器";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { LabelHotkey, LabelMouse, labelMouseDPS, labelKeyDPS });
+            statusStrip1.Location = new System.Drawing.Point(3, 613);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new System.Drawing.Size(977, 22);
+            statusStrip1.TabIndex = 22;
+            statusStrip1.Text = "statusStrip1";
+            // 
+            // LabelHotkey
+            // 
+            LabelHotkey.Name = "LabelHotkey";
+            LabelHotkey.Size = new System.Drawing.Size(13, 17);
+            LabelHotkey.Text = "-";
+            // 
+            // LabelMouse
+            // 
+            LabelMouse.Name = "LabelMouse";
+            LabelMouse.Size = new System.Drawing.Size(33, 17);
+            LabelMouse.Text = "(0,0)";
+            // 
+            // button7
+            // 
+            button7.Location = new System.Drawing.Point(714, 49);
+            button7.Name = "button7";
+            button7.Size = new System.Drawing.Size(75, 23);
+            button7.TabIndex = 21;
+            button7.Text = "button7";
+            button7.UseVisualStyleBackColor = true;
+            button7.Click += button7_Click;
             // 
             // LogTextbox
             // 
@@ -586,15 +624,17 @@
             textBox2.Size = new System.Drawing.Size(151, 29);
             textBox2.TabIndex = 26;
             // 
-            // button7
+            // labelMouseDPS
             // 
-            button7.Location = new System.Drawing.Point(714, 49);
-            button7.Name = "button7";
-            button7.Size = new System.Drawing.Size(75, 23);
-            button7.TabIndex = 21;
-            button7.Text = "button7";
-            button7.UseVisualStyleBackColor = true;
-            button7.Click += button7_Click;
+            labelMouseDPS.Name = "labelMouseDPS";
+            labelMouseDPS.Size = new System.Drawing.Size(57, 17);
+            labelMouseDPS.Text = "鼠标dps:";
+            // 
+            // labelKeyDPS
+            // 
+            labelKeyDPS.Name = "labelKeyDPS";
+            labelKeyDPS.Size = new System.Drawing.Size(57, 17);
+            labelKeyDPS.Text = "键盘dps:";
             // 
             // Form1
             // 
@@ -615,6 +655,8 @@
             tabControl2.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).EndInit();
@@ -681,6 +723,11 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox LogTextbox;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel LabelHotkey;
+        private System.Windows.Forms.ToolStripStatusLabel LabelMouse;
+        private System.Windows.Forms.ToolStripStatusLabel labelMouseDPS;
+        private System.Windows.Forms.ToolStripStatusLabel labelKeyDPS;
     }
 }
 

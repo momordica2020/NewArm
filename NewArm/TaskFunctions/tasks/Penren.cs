@@ -10,9 +10,7 @@ namespace NewArm.TaskFunctions.tasks
 {
     public class Penren : TimerTask
     {
-        public Penren(Log _log) : base(_log)
-        {
-        }
+
 
         public string _filePath;
         string[] _lines;
@@ -25,7 +23,7 @@ namespace NewArm.TaskFunctions.tasks
         protected override void _init()
         {
             _count = 0;
-            _filePath = Config.param[0];
+            _filePath = Config.Params[0];
             // 读取文件
             _lines = File.ReadAllLines(_filePath)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
@@ -33,7 +31,7 @@ namespace NewArm.TaskFunctions.tasks
 
             if (_lines.Length == 0)
             {
-                log(LogInfo.Info("文件为空或没有有效行"));
+                log(Log.Text("文件为空或没有有效行"));
                 return;
             }
         }

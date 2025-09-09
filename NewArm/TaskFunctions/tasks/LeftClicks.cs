@@ -10,9 +10,7 @@ namespace NewArm.TaskFunctions.tasks
     //[TaskName("leftclick")]
     public class LeftClicks : TimerTask
     {
-        public LeftClicks(Log _log) : base(_log)
-        {
-        }
+
 
         protected override void _init()
         {
@@ -21,7 +19,7 @@ namespace NewArm.TaskFunctions.tasks
 
         protected override void _work()
         {
-            WinApi.Click("left", Config.interval);
+            WinApi.Click("left", Config.Cd);
         }
     }
 }

@@ -8,8 +8,9 @@ namespace NewArm.TaskFunctions
 {
     public class TaskConfig
     {
-        public string[] param;
-        public ushort[] triggerCodes;
-        public int interval;
+        public string TaskId;
+        public string[] Params;
+        public ushort[] HotKey;
+        public int Cd;
     }
 }

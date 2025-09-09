@@ -34,24 +34,26 @@ namespace NewArm
         private Dictionary<ushort, bool> trigger_state;
 
         //private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-        public delegate void Log(LogInfo msg);
+        
 
-        private readonly WinApi.LowLevelKeyboardProc _keyboardProcDelegate;
+        private readonly WinApi.LowLevelKeyboardOrMouseProc _keyboardProcDelegate;
 
-        private Log _log;
-        protected void log(LogInfo msg)
+        public LogEvent LogReportAction = null;
+        protected void log(Log msg)
         {
-            msg.taskName = this.GetType().Name;
-            _log(msg);
+            if(Config!=null)
+            msg.TaskId = Config.TaskId;
+            if (LogReportAction != null)
+            {
+                LogReportAction(msg);
+            }
         }
 
-        public TimerTask(Log __log)
+        public TimerTask()
         {
-            
             isRunning = false;
             //_cts = new CancellationTokenSource();
             _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
-            _log = __log;
             _keyboardProcDelegate = KeyboardProc; // 保存委托引用
         }
 
@@ -59,7 +61,7 @@ namespace NewArm
         {
             if (isRunning)
             {
-                log(LogInfo.Info("任务已在运行"));
+                log(Log.Text("任务已在运行"));
                 return;
             }
 
@@ -70,12 +72,12 @@ namespace NewArm
 
                 // 启动定时器
                 isRunning = true;
-                _timer.Change(Config.interval, Timeout.Infinite);
-                log(LogInfo.Start);
+                _timer.Change(Config.Cd, Timeout.Infinite);
+                log(Log.Start);
             }
             catch (Exception ex)
             {
-                log(LogInfo.Error(ex));
+                log(Log.Error(ex));
             }
         }
 
@@ -87,14 +89,14 @@ namespace NewArm
         /// <param name="param"></param>
         public void Init(TaskConfig config)
         {
-            log(LogInfo.Info($"初始化{this.GetType().Name}脚本,热键{string.Join("+", config.triggerCodes.Select(k => ((System.Windows.Forms.Keys)k).ToString()))},间隔{config.interval}ms {string.Join("\r\n", config.param ?? [])}"));
+            log(Log.Text($"初始化{this.GetType().Name}脚本,热键{string.Join("+", config.HotKey.Select(k => ((System.Windows.Forms.Keys)k).ToString()))},间隔{config.Cd}ms {string.Join("\r\n", config.Params ?? [])}"));
 
             Config = config;
             //trigger_Codes = trigger_codes;
-            if (Config.triggerCodes.Length > 0)
+            if (Config.HotKey.Length > 0)
             {
                 trigger_state = new Dictionary<ushort, bool>();
-                foreach (ushort code in Config.triggerCodes)
+                foreach (ushort code in Config.HotKey)
                 {
                     trigger_state[code] = false;
                 }
@@ -123,14 +125,14 @@ namespace NewArm
         {
             if (!isRunning)
             {
-                log(LogInfo.Stop);
+                log(Log.Stop);
                 return;
             }
 
             _timer.Change(Timeout.Infinite, Timeout.Infinite);
             isRunning = false;
-            
-            log(LogInfo.Stop);
+
+            log(Log.Stop);
         }
 
         private void OnTimerElapsed(object state)
@@ -142,43 +144,47 @@ namespace NewArm
                 if (isRunning)
                 {
                     // 重新设置定时器
-                    _timer.Change(Config.interval, Timeout.Infinite);
+                    _timer.Change(Config.Cd, Timeout.Infinite);
                 }
 
                 
             }
             catch (Exception ex)
             {
-                log(LogInfo.Error(ex));
+                log(Log.Error(ex));
                 Stop();
             }
         }
 
-        private nint KeyboardProc(int nCode, nint wParam, nint lParam)
+        private IntPtr KeyboardProc(int nCode, nint wParam, nint lParam)
         {
-            
-            if (nCode >= 0 && wParam == (uint)WinApi.WM_KEYDOWN)
+            if (nCode >= 0)
             {
-                
                 ushort vkCode = (ushort)Marshal.ReadInt32(lParam);
-                //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Down"));
-                if (trigger_state.ContainsKey(vkCode))
+                switch ((int)wParam)
                 {
-                    trigger_state[vkCode] = true;
-                    
+                    case WinApi.WM_KEYDOWN:
+                    case WinApi.WM_SYSKEYDOWN:
+
+                        //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Down"));
+                        if (trigger_state.ContainsKey(vkCode))
+                        {
+                            trigger_state[vkCode] = true;
+
+                        }
+                        break;
+                    case WinApi.WM_KEYUP:
+                    case WinApi.WM_SYSKEYUP:
+                        //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Up"));
+                        if (trigger_state.ContainsKey(vkCode))
+                        {
+                            trigger_state[vkCode] = false;
+
+                        }
+                        break;
                 }
             }
-            else if(nCode >= 0 && wParam == (ushort)WinApi.WM_KEYUP)
-            {
-                
-                ushort vkCode = (ushort)Marshal.ReadInt32(lParam);
-                //log(LogInfo.Info($"{((System.Windows.Forms.Keys)vkCode).ToString()} Up"));
-                if (trigger_state.ContainsKey(vkCode))
-                {
-                    trigger_state[vkCode] = false;
-                    
-                }
-            }
+
             bool trigger = true;
             foreach (var val in trigger_state.Values)
             {

@@ -17,13 +17,18 @@ namespace NewArm.Core
         public event KeyPressEventHandler KeyPressEvent;
         public event KeyEventHandler KeyUpEvent;
 
-        public delegate int HookProc(int nCode, int wParam, nint lParam);
+        public delegate int HookProc(int nCode, int wParam, IntPtr lParam);
         static int hKeyboardHook = 0; //声明键盘钩子处理的初始值
-        //值在Microsoft SDK的Winuser.h里查询
+        /// <summary>
+        /// 值在Microsoft SDK的Winuser.h里查询
+        /// </summary>
         // http://www.bianceng.cn/Programming/csharp/201410/45484.htm
-        public const int WH_KEYBOARD_LL = 13;   //线程键盘钩子监听鼠标消息设为2，全局键盘监听鼠标消息设为13
+        /// 线程键盘钩子监听鼠标消息设为2，全局键盘监听鼠标消息设为13
+        public const int WH_KEYBOARD_LL = 13;   
         HookProc KeyboardHookProcedure; //声明KeyboardHookProcedure作为HookProc类型
-        //键盘结构
+        /// <summary>
+        /// 键盘结构
+        /// </summary>
         [StructLayout(LayoutKind.Sequential)]
         public class KeyboardHookStruct
         {
@@ -33,27 +38,52 @@ namespace NewArm.Core
             public int time; // 指定的时间戳记的这个讯息
             public int dwExtraInfo; // 指定额外信息相关的信息
         }
-        //使用此功能，安装了一个钩子
+        /// <summary>
+        /// 使用此功能，安装了一个钩子
+        /// </summary>
+        /// <param name="idHook"></param>
+        /// <param name="lpfn"></param>
+        /// <param name="hInstance"></param>
+        /// <param name="threadId"></param>
+        /// <returns></returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int SetWindowsHookEx(int idHook, HookProc lpfn, nint hInstance, int threadId);
+        public static extern int SetWindowsHookEx(int idHook, HookProc lpfn, IntPtr hInstance, int threadId);
 
 
-        //调用此函数卸载钩子
+        /// <summary>
+        /// 调用此函数卸载钩子
+        /// </summary>
+        /// <param name="idHook"></param>
+        /// <returns></returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern bool UnhookWindowsHookEx(int idHook);
 
 
-        //使用此功能，通过信息钩子继续下一个钩子
+        /// <summary>
+        /// 使用此功能，通过信息钩子继续下一个钩子
+        /// </summary>
+        /// <param name="idHook"></param>
+        /// <param name="nCode"></param>
+        /// <param name="wParam"></param>
+        /// <param name="lParam"></param>
+        /// <returns></returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern int CallNextHookEx(int idHook, int nCode, int wParam, nint lParam);
+        public static extern int CallNextHookEx(int idHook, int nCode, int wParam, IntPtr lParam);
 
-        // 取得当前线程编号（线程钩子需要用到）
+        /// <summary>
+        /// 取得当前线程编号（线程钩子需要用到）
+        /// </summary>
+        /// <returns></returns>
         [DllImport("kernel32.dll")]
         static extern int GetCurrentThreadId();
 
-        //使用WINDOWS API函数代替获取当前实例的函数,防止钩子失效
+        /// <summary>
+        /// 使用WINDOWS API函数代替获取当前实例的函数,防止钩子失效
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         [DllImport("kernel32.dll")]
-        public static extern nint GetModuleHandle(string name);
+        public static extern IntPtr GetModuleHandle(string name);
 
         public void Start()
         {
@@ -119,7 +149,7 @@ namespace NewArm.Core
         private const int WM_SYSKEYDOWN = 0x104;//SYSKEYDOWN
         private const int WM_SYSKEYUP = 0x105;//SYSKEYUP
 
-        public int KeyboardHookProc(int nCode, int wParam, nint lParam)
+        public int KeyboardHookProc(int nCode, int wParam, IntPtr lParam)
         {
             // 侦听键盘事件
             if (nCode >= 0 && (KeyDownEvent != null || KeyUpEvent != null || KeyPressEvent != null))

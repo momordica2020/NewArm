@@ -67,13 +67,13 @@ namespace NewArm.Core
 
         // 键盘钩子相关
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardOrMouseProc lpfn, IntPtr hMod, uint dwThreadId);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool UnhookWindowsHookEx(IntPtr hhk);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+        public static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, nint wParam, nint lParam);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr GetModuleHandle(string lpModuleName);
@@ -98,11 +98,27 @@ namespace NewArm.Core
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
         [StructLayout(LayoutKind.Sequential)]
-        struct POINT
+        public struct POINT
         {
             public int X;
             public int Y;
         }
+
+
+        /// <summary>
+        /// 鼠标事件结构体
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSLLHOOKSTRUCT
+        {
+            public POINT pt; // 鼠标坐标
+            public uint mouseData; // 额外数据（如滚轮方向）
+            public uint flags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
+
+
 
         [StructLayout(LayoutKind.Sequential)]
         struct MONITORINFO
@@ -127,7 +143,8 @@ namespace NewArm.Core
         private const int SM_CYSCREEN = 1; // 屏幕高度
         private const int MONITOR_DEFAULTTOPRIMARY = 1;
 
-        public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        public delegate IntPtr LowLevelKeyboardOrMouseProc(int nCode, nint wParam, nint lParam);
+
 
         // 输入类型和标志
         private const uint INPUT_MOUSE = 0;

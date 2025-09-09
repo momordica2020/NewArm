@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static NewArm.TimerTask;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace NewArm
 {
@@ -26,36 +27,43 @@ namespace NewArm
 
     public partial class Form1 : Form
     {
-        private bool getMousePositionRun = true;
-        private bool run = false;
-        delegate void sendStringDelegate(string str);
-        delegate void sendVoidDelegate();
-        int num = 0;
-        KeyboardHook k_hook;
+        //private bool getMousePositionRun = true;
+        // private bool run = false;
+        // delegate void sendStringDelegate(string str);
+        // delegate void sendVoidDelegate();
+        // int num = 0;
+        // KeyboardHook k_hook;
 
-        string filename = "tasks.json";
-        static string fileConfig = "config.json";
+        ConfigManager configManager;
         Config config;
 
-        private List<Task> tasks;
-        private Task nowTask;
-
-
         public Dictionary<string, TimerTask> timerTasks = new Dictionary<string, TimerTask>();
+        KeysMonitor monitor;
 
 
         public Form1()
         {
+
+            configManager = new ConfigManager();
+            config = configManager.Load();
+
+            monitor = new KeysMonitor();
+            monitor.LogReportAction = dealLog;
+            monitor.keyboardDPS = PrintKeyboardDPS;
+            monitor.mouseDPS = PrintMouseDPS;
+            monitor.mouseStateEvent = PrintMouseState;
+            monitor.keyboardStateEvent = PrintHotkeyState;
+
             InitializeComponent();
             this.Focus();
             comboBox1.SelectedIndex = 0;
-            loadTasks();
-            updateTasksView();
+            // loadTasks();
+            // updateTasksView();
 
-            initHook();
+            //initHook();
 
             //开启捕捉鼠标位置的常驻线程
-            new Thread(workGetMousePosition).Start();
+            //new Thread(workGetMousePosition).Start();
 
 
         }
@@ -63,15 +71,45 @@ namespace NewArm
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            // 读取配置项
-            ReadConfig();
             updateConfigToUI();
 
-            Init(typeof(LeftClicks), new TaskConfig { triggerCodes = [WinApi.VK_F2], interval = config.cdTimeMs });
-            Init(typeof(Penren), new TaskConfig { triggerCodes = [WinApi.VK_F9], interval = 500, param = ["words.txt"] });
-            Init(typeof(AutoPaint), new TaskConfig { triggerCodes = [WinApi.VK_F4], interval = 100 });
-            Init(typeof(DragMouse), new TaskConfig { triggerCodes = [WinApi.VK_LCONTROL, WinApi.VK_SPACE], interval = 1 });
+            monitor.Start();
 
+            Init(typeof(LeftClicks), new TaskConfig { HotKey = [WinApi.VK_F2], Cd = config.cdTimeMs });
+            Init(typeof(Penren), new TaskConfig { HotKey = [WinApi.VK_F9], Cd = 500, Params = ["words.txt"] });
+            Init(typeof(AutoPaint), new TaskConfig { HotKey = [WinApi.VK_F4], Cd = 100 });
+            Init(typeof(DragMouse),
+                new TaskConfig
+                {
+                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_1],
+                    Cd = 1,
+                    Params = ["0"]
+                },
+                "0");
+            Init(typeof(DragMouse),
+                new TaskConfig
+                {
+                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_2],
+                    Cd = 1,
+                    Params = ["1"]
+                },
+                "1");
+            Init(typeof(DragMouse),
+                new TaskConfig
+                {
+                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_3],
+                    Cd = 1,
+                    Params = ["2"]
+                },
+                "2");
+            Init(typeof(DragMouse),
+                new TaskConfig
+                {
+                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_4],
+                    Cd = 1,
+                    Params = ["3"]
+                },
+                "3");
 
 
 
@@ -85,14 +123,14 @@ namespace NewArm
         /// 处理来自task的日志信息，包括模块启动、结束ui界面的相关更新
         /// </summary>
         /// <param name="log"></param>
-        public void dealLog(LogInfo log)
+        public void dealLog(Log log)
         {
-            string res = log.text;
+            string res = log.Content;
             Invoke(new Action(() =>
             {
-                if (log.type == LogType.Start) { res = $"启动 {res}"; dealStart(log.taskName); }
-                else if (log.type == LogType.Stop) { res = $"停止 {res}"; dealStop(log.taskName); }
-                res = $"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}]{log.taskName} {res}\r\n";
+                if (log.Type == LogType.Start) { res = $"启动 {res}"; dealStart(log.TaskId); }
+                else if (log.Type == LogType.Stop) { res = $"停止 {res}"; dealStop(log.TaskId); }
+                res = $"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}]{log.TaskId} {res}\r\n";
             }));
             printLog(res);
         }
@@ -147,312 +185,129 @@ namespace NewArm
             }
             else
             {
-                dealLog(LogInfo.Info($"{taskName}不存在"));
+                dealLog(Log.Text($"{taskName}不存在"));
             }
 
         }
 
-        public void Init(Type task, TaskConfig config = null)
+        public void Init(Type task, TaskConfig config = null, string name_tail = "")
         {
-            if (!timerTasks.ContainsKey(task.Name))
+            string id = $"{task.Name}{name_tail}";
+            if (config == null) config = new TaskConfig { TaskId = id };
+            if (!timerTasks.ContainsKey(id))
             {
-                timerTasks[task.Name] = (TimerTask)(Activator.CreateInstance(task, args: [(Log)dealLog]));
+                timerTasks[id] = (TimerTask)(Activator.CreateInstance(task));
 
             }
             else
             {
-                timerTasks[task.Name].Stop();
+                timerTasks[id].Stop();
             }
-            if (config != null) timerTasks[task.Name].Init(config);
+            timerTasks[id].LogReportAction = dealLog;
+            timerTasks[id].Init(config);
         }
 
         public void Print(string str)
         {
-            if (textBox1.InvokeRequired)
-            {
-                sendStringDelegate mevent = new sendStringDelegate(Print);
-                Invoke(mevent, (object)str);
-            }
-            else
+            Invoke(new Action(() =>
             {
                 textBox1.AppendText(str + "\r\n");
-            }
+            }));
         }
 
 
-        public void PrintLabel(string str)
+        public void PrintHotkeyState(Keys[] keys)
         {
-            if (label5.InvokeRequired)
+            Invoke(new Action(() =>
             {
-                sendStringDelegate mevent = new sendStringDelegate(PrintLabel);
-                Invoke(mevent, (object)str);
-            }
-            else
+                LabelHotkey.Text = string.Join("  ", keys.Select(k => k.ToString()));
+            }));
+        }
+
+        public void PrintMouseState(MouseState state)
+        {
+            Invoke(new Action(() =>
             {
-                label5.Text = str;
-            }
+                StringBuilder sb = new StringBuilder();
+                if (state.leftMouseDown) sb.Append(" 鼠标左键");
+                if (state.rightMouseDown) sb.Append(" 鼠标右键");
+                if (state.middleMouseDown) sb.Append(" 鼠标中键");
+                if (state.middleWheel != 0) sb.Append($" 滚轮滑动{state.middleWheel}");
+                if (state.mouseLogicLocation != Point.Empty) sb.Append($" 逻辑坐标({state.mouseLogicLocation.X},{state.mouseLogicLocation.Y})");
+                if (state.mouseRealLocation != Point.Empty) sb.Append($" 真实坐标({state.mouseRealLocation.X},{state.mouseRealLocation.Y})");
+                LabelMouse.Text = sb.ToString();
+            }));
         }
 
-        #region old_tasks
-
-
-        private void loadTasks()
+        public void PrintMouseDPS(double dps)
         {
-            try
+            Invoke(new Action(() =>
             {
-                tasks = IOController.getDataFromJson(filename);
-
-
-
-
-            }
-            catch
+                labelMouseDPS.Text = $"鼠标DPS={dps:f2}";
+            }));
+        }
+        public void PrintKeyboardDPS(double dps)
+        {
+            Invoke(new Action(() =>
             {
-                tasks = new List<Task>();
-            }
-
+                labelKeyDPS.Text = $"键盘DPS={dps:f2}";
+            }));
         }
 
+        ///// <summary>
+        ///// 安装键盘钩子
+        ///// </summary>
+        //private void initHook()
+        //{
+        //    k_hook = new KeyboardHook();
+        //    k_hook.KeyDownEvent += new KeyEventHandler(hook_KeyDown);//钩住键按下 
+        //    k_hook.Start();//安装键盘钩子
+        //}
+
+        ///// <summary>
+        ///// 取消钩子
+        ///// </summary>
+        //private void stopHook()
+        //{
+        //    try
+        //    {
+        //        k_hook.Stop();
+        //    }
+        //    catch
+        //    {
+
+        //    }
+        //}
+
+        //private void hook_KeyDown(object sender, KeyEventArgs e)
+        //{
+        //    //if (e.KeyValue == (int)Keys.A && (int)Control.ModifierKeys == (int)Keys.Alt)
+        //    if (run)
+        //    {
+        //       // dealTask(e.KeyCode);
+        //    }
+
+
+        //    //if (e.KeyCode == config.actKey)
+        //    //{
+        //    //    if (leftloop) stopMouseClickLoop();
+        //    //    else startMouseClickLoop();
+        //    //}
+
+        //}
 
 
 
 
 
-        private void saveTasks()
-        {
-            try
-            {
-                IOController.saveDataAsJson(filename, tasks);
-            }
-            catch
-            {
-
-            }
-
-        }
-
-        private void updateTasks()
-        {
-            for (int i = 0; i < checkedListBox1.Items.Count; i++)
-            {
-                this.tasks[i].isRun = checkedListBox1.GetItemChecked(i);
-            }
-        }
-
-        private void updateTasksView()
-        {
-            if (checkedListBox1.InvokeRequired)
-            {
-                sendVoidDelegate mevent = new sendVoidDelegate(updateTasksView);
-                Invoke(mevent);
-            }
-            else
-            {
-                checkedListBox1.Items.Clear();
-                foreach (var i in tasks)
-                {
-                    string name = i.name;
-                    bool isRun = i.isRun;
-                    checkedListBox1.Items.Add(name, isRun);
-                }
-            }
-        }
-
-        private void updateTaskItemView()
-        {
-            if (checkedListBox1.InvokeRequired)
-            {
-                sendVoidDelegate mevent = new sendVoidDelegate(updateTaskItemView);
-                Invoke(mevent);
-            }
-            else
-            {
-                if (nowTask == null) return;
-                textBox2.Text = nowTask.name;
-                comboBox2.SelectedIndex = Util.key2int(nowTask.hotKey);
-                listView1.Items.Clear();
-                foreach (var i in nowTask.items)
-                {
-                    ListViewItem item = new ListViewItem(i.command.ToString());
-                    item.SubItems.Add(i.args);
-                    listView1.Items.Add(item);
-                }
-            }
-        }
-
-        private void addTask()
-        {
-            tasks.Add(new Task());
-            updateTasksView();
-            checkedListBox1.SelectedIndex = checkedListBox1.SelectedItems.Count - 1;
-            updateTaskItemView();
-        }
-
-        private void deleteTask(int index)
-        {
-            tasks.RemoveAt(index);
-            updateTasksView();
-            if (tasks.Count > 0) checkedListBox1.SelectedIndex = index;
-            updateTaskItemView();
-        }
-
-        private void addTaskItem(Command comm, string args)
-        {
-            TaskItem item = new TaskItem();
-            item.command = comm;
-            item.args = args;
-            nowTask.items.Add(item);
-            updateTaskItemView();
-        }
-
-        private void changeTaskItemPosition(int ds)
-        {
-            int beforep = listView1.SelectedIndices[0];
-            int afterp = beforep + ds;
-            if (afterp < 0 || afterp >= nowTask.items.Count) return;
-            TaskItem i1 = nowTask.items[beforep];
-            TaskItem i2 = nowTask.items[afterp];
-            Command tmpc = i2.command;
-            string tmpa = i2.args;
-            i2.args = i1.args;
-            i2.command = i1.command;
-            i1.args = tmpa;
-            i1.command = tmpc;
-
-            updateTaskItemView();
-        }
-
-        private void deleteTaskItem(int index)
-        {
-            nowTask.items.RemoveAt(index);
-
-            updateTaskItemView();
-        }
-
-        private void updateTaskItem()
-        {
-            nowTask.name = textBox2.Text;
-            nowTask.hotKey = Util.str2key(comboBox2.SelectedItem.ToString());
-        }
-
-
-        private void dealTaskItem(TaskItem item)
-        {
-            switch (item.command)
-            {
-                case Command.mouseMovStatic:
-                    int x = 0;
-                    int y = 0;
-                    int.TryParse(item.args.Split(' ')[0], out x);
-                    int.TryParse(item.args.Split(' ')[1], out y);
-                    WinApi.MouseMoveAbsolute(x, y);
-                    break;
-                case Command.mouseMov:
-                    int dx = 0;
-                    int dy = 0;
-                    int.TryParse(item.args.Split(' ')[0], out dx);
-                    int.TryParse(item.args.Split(' ')[1], out dy);
-                    WinApi.MouseMove(dx, dy);
-                    break;
-                case Command.mouseLC:
-                    WinApi.Click("left");
-                    break;
-                case Command.mouseLD:
-                    WinApi.MouseDown("left");
-                    break;
-                case Command.mouseLU:
-                    WinApi.MouseUp("left");
-                    break;
-                case Command.wait:
-                    int time = 0;
-                    int.TryParse(item.args, out time);
-                    Thread.Sleep(time);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void dealTask(Keys key)
-        {
-            foreach (var task in tasks)
-            {
-                if (task.isRun && task.hotKey == key)
-                {
-                    int beginx = MousePosition.X;
-                    int beginy = MousePosition.Y;
-
-                    foreach (var item in task.items)
-                    {
-
-                        dealTaskItem(item);
-                    }
-
-                    WinApi.MouseMove(beginx, beginy);
-                }
-            }
-        }
-
-
-        #endregion
-
-
-
-
-        /// <summary>
-        /// 安装键盘钩子
-        /// </summary>
-        private void initHook()
-        {
-            k_hook = new KeyboardHook();
-            k_hook.KeyDownEvent += new KeyEventHandler(hook_KeyDown);//钩住键按下 
-            k_hook.Start();//安装键盘钩子
-        }
-
-        /// <summary>
-        /// 取消钩子
-        /// </summary>
-        private void stopHook()
-        {
-            try
-            {
-                k_hook.Stop();
-            }
-            catch
-            {
-
-            }
-        }
-
-        private void hook_KeyDown(object sender, KeyEventArgs e)
-        {
-            //if (e.KeyValue == (int)Keys.A && (int)Control.ModifierKeys == (int)Keys.Alt)
-            if (run)
-            {
-                dealTask(e.KeyCode);
-            }
-
-
-            //if (e.KeyCode == config.actKey)
-            //{
-            //    if (leftloop) stopMouseClickLoop();
-            //    else startMouseClickLoop();
-            //}
-
-        }
-
-
-
-
-
-        public void workGetMousePosition()
-        {
-            while (getMousePositionRun)
-            {
-                PrintLabel(string.Format("x:{0},y:{1}", MousePosition.X, MousePosition.Y));
-                Thread.Sleep(500);
-            }
-        }
+        //public void workGetMousePosition()
+        //{
+        //    while (getMousePositionRun)
+        //    {
+        //        PrintLabel(string.Format("x:{0},y:{1}", MousePosition.X, MousePosition.Y));
+        //        Thread.Sleep(500);
+        //    }
+        //}
 
         //double tx = 48.1927710843;
         //double ty = 85.4700854701;
@@ -462,7 +317,7 @@ namespace NewArm
         //private bool ctrlPressed;
         //private bool altPressed;
         //private bool shiftPressed;
-        private Keys currentHotkey;
+        //private Keys currentHotkey;
 
 
 
@@ -498,28 +353,30 @@ namespace NewArm
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (run)
-            {
-                run = false;
-                Print("已中止热键响应.");
-                button1.Text = "激活";
-            }
-            else
-            {
-                run = true;
-                Print("开始响应热键.");
-                button1.Text = "停止";
-            }
+            //if (run)
+            //{
+            //    run = false;
+            //    Print("已中止热键响应.");
+            //    button1.Text = "激活";
+            //}
+            //else
+            //{
+            //    run = true;
+            //    Print("开始响应热键.");
+            //    button1.Text = "停止";
+            //}
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
             {
-                stopHook();
-                getMousePositionRun = false;
-                saveTasks();
-                WriteConfig();
+                //stopHook();
+                //getMousePositionRun = false;
+
+                updateConfig();
+                configManager.Save();
+
             }
             catch (Exception ex)
             {
@@ -531,33 +388,33 @@ namespace NewArm
 
         private void checkedListBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
-            {
-                contextMenuStrip1.Show(MousePosition);
-            }
-            else if (e.Button == MouseButtons.Left)
-            {
-                if (checkedListBox1.SelectedItem != null)
-                {
-                    int index = checkedListBox1.SelectedIndex;
-                    nowTask = tasks[index];
-                    updateTaskItemView();
-                }
-                updateTasks();
-            }
+            //if (e.Button == MouseButtons.Right)
+            //{
+            //    contextMenuStrip1.Show(MousePosition);
+            //}
+            //else if (e.Button == MouseButtons.Left)
+            //{
+            //    if (checkedListBox1.SelectedItem != null)
+            //    {
+            //        int index = checkedListBox1.SelectedIndex;
+            //        nowTask = tasks[index];
+            //        updateTaskItemView();
+            //    }
+            //    updateTasks();
+            //}
         }
 
         private void 新建任务ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            addTask();
+            // addTask();
         }
 
         private void 删除任务ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (checkedListBox1.SelectedItems.Count > 0)
-            {
-                deleteTask(checkedListBox1.SelectedIndex);
-            }
+            //if (checkedListBox1.SelectedItems.Count > 0)
+            //{
+            //    deleteTask(checkedListBox1.SelectedIndex);
+            //}
 
         }
 
@@ -571,55 +428,55 @@ namespace NewArm
 
         private void 上移ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
-                changeTaskItemPosition(-1);
+            //if (listView1.SelectedItems.Count > 0)
+            //    changeTaskItemPosition(-1);
         }
 
         private void 下移ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
-                changeTaskItemPosition(1);
+            //if (listView1.SelectedItems.Count > 0)
+            //    changeTaskItemPosition(1);
         }
 
         private void 删除ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (listView1.SelectedItems.Count > 0)
-            {
-                deleteTaskItem(listView1.SelectedIndices[0]);
-            }
+            //if (listView1.SelectedItems.Count > 0)
+            //{
+            //    deleteTaskItem(listView1.SelectedIndices[0]);
+            //}
 
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Command comm = (Command)comboBox1.SelectedIndex;
-            if (comm == Command.mouseMov || comm == Command.mouseMovStatic)
-                addTaskItem(comm, string.Format("{0} {1}", textBox3.Text, textBox4.Text));
-            else
-                addTaskItem(comm, string.Empty);
+            //Command comm = (Command)comboBox1.SelectedIndex;
+            //if (comm == Command.mouseMov || comm == Command.mouseMovStatic)
+            //    addTaskItem(comm, string.Format("{0} {1}", textBox3.Text, textBox4.Text));
+            //else
+            //    addTaskItem(comm, string.Empty);
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            addTaskItem(Command.key, textBox5.Text);
+            // addTaskItem(Command.key, textBox5.Text);
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            addTaskItem(Command.wait, numericUpDown1.Value.ToString());
+            //addTaskItem(Command.wait, numericUpDown1.Value.ToString());
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-            updateTaskItem();
-            updateTasksView();
+            //updateTaskItem();
+            //updateTasksView();
         }
 
 
 
         private void button6_Click(object sender, EventArgs e)
         {
-            Init(typeof(LeftClicks), new TaskConfig { triggerCodes = [(ushort)config.actKey], interval = config.cdTimeMs });
+            Init(typeof(LeftClicks), new TaskConfig { HotKey = [(ushort)config.actKey], Cd = config.cdTimeMs });
             Trigger(typeof(LeftClicks).Name);
         }
 
@@ -642,38 +499,7 @@ namespace NewArm
             config.cdTimeMs = (int)numericUpDown2.Value;
             updateConfigToUI();
         }
-        public void ReadConfig()
-        {
-            try
-            {
-                // 从文件中读取 JSON 字符串
-                if (!File.Exists(fileConfig))
-                {
-                    throw new FileNotFoundException("Configuration file not found.");
-                }
-                string jsonString = File.ReadAllText(fileConfig);
 
-                // 使用 Newtonsoft.Json 反序列化 JSON 字符串到 Config 对象
-                config = JsonConvert.DeserializeObject<Config>(jsonString);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"读取配置文件时出错: {ex.Message}");
-            }
-
-            // 要是没有，就初始化
-            if (config == null)
-            {
-                config = new Config
-                {
-                    actMouseLeft = true,
-                    actMouseRight = false,
-                    actKey = Keys.F1,
-                    cdTimeMs = 50,
-                };
-            }
-        }
 
         /// <summary>
         /// 把界面的鼠标连点配置项更新到config里
@@ -729,24 +555,6 @@ namespace NewArm
             }
         }
 
-        public void WriteConfig()
-        {
-            try
-            {
-                updateConfig();
-                // 将对象序列化为 JSON 字符串
-                string jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
-
-                // 将 JSON 字符串写入文件
-                File.WriteAllText(fileConfig, jsonString);
-
-                //Console.WriteLine("配置文件已成功写入！");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"写入配置文件时出错: {ex.Message}");
-            }
-        }
 
 
         private void textBox6_KeyDown(object sender, KeyEventArgs e)
@@ -757,10 +565,10 @@ namespace NewArm
             //shiftPressed = e.Shift;
 
             // 将组合键保存到 currentHotkey
-            currentHotkey = e.KeyCode;
+            //currentHotkey = e.KeyCode;
 
-            // 显示热键
-            UpdateHotkeyTextBox();
+            //// 显示热键
+            //UpdateHotkeyTextBox();
         }
 
         private void UpdateHotkeyTextBox()
@@ -775,7 +583,7 @@ namespace NewArm
             //    hotkeyDisplay += "Shift + ";
 
             //hotkeyDisplay += currentHotkey != Keys.None ? currentHotkey.ToString() : "";
-            config.actKey = currentHotkey;
+            //config.actKey = currentHotkey;
         }
 
         private void textBox6_KeyUp(object sender, KeyEventArgs e)
@@ -784,9 +592,9 @@ namespace NewArm
             //if (!e.Alt) altPressed = false;
             //if (!e.Shift) shiftPressed = false;
 
-            // 显示热键
-            UpdateHotkeyTextBox();
-            updateConfigToUI();
+            //// 显示热键
+            //UpdateHotkeyTextBox();
+            //updateConfigToUI();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -796,8 +604,10 @@ namespace NewArm
 
         private void button7_Click(object sender, EventArgs e)
         {
-            var paintArea = new Rectangle(50, 150, 1600, 1000);
+            //var paintArea = new Rectangle(50, 150, 1600, 1000);
             //var targets = ScreenVision.FindTargetsOnScreen(paintArea, Util.GetMousColor(), 3, new Size(5, 5), new Size(35, 35));
         }
+
+
     }
 }

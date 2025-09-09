@@ -15,9 +15,7 @@ namespace NewArm.TaskFunctions.tasks
 {
     public class AutoPaint : TimerTask
     {
-        public AutoPaint(Log __log) : base(__log)
-        {
-        }
+
 
         public Rectangle paintArea;
 
@@ -34,7 +32,7 @@ namespace NewArm.TaskFunctions.tasks
             WinApi.Click("left", 10);
             Thread.Sleep(500);
             var targets = ScreenVision.FindTargetsOnScreen(paintArea,WinApi.GetColor(), 3, 5, 35, 5, 35);
-            log(LogInfo.Info($"{targets.Count}个点,{WinApi.GetColor().ToString()}"));
+            log(Log.Text($"{targets.Count}个点,{WinApi.GetColor().ToString()}"));
             targets = targets.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
             foreach (var t in targets)
             {
@@ -44,7 +42,7 @@ namespace NewArm.TaskFunctions.tasks
                 //log(LogInfo.Info($"{screenX},{screenY}"));
                 WinApi.MouseMoveAbsolute(screenX, screenY);
                 WinApi.Click("left", 10);
-                Thread.Sleep(10);
+                //Thread.Sleep(5);
 
 
                 if (!isRunning) break;
