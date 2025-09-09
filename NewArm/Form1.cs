@@ -39,6 +39,7 @@ namespace NewArm
 
         public Dictionary<string, TimerTask> timerTasks = new Dictionary<string, TimerTask>();
         KeysMonitor monitor;
+        bool windowExist = false;
 
 
         public Form1()
@@ -71,43 +72,50 @@ namespace NewArm
 
         private void Form1_Shown(object sender, EventArgs e)
         {
+            windowExist = true;
             updateConfigToUI();
 
             monitor.Start();
 
-            Init(typeof(LeftClicks), new TaskConfig { HotKey = [WinApi.VK_F2], Cd = config.cdTimeMs });
+            
+
+            //Init(typeof(LeftClicks), new TaskConfig { HotKey = [WinApi.VK_F2], Cd = config.cdTimeMs });
             Init(typeof(Penren), new TaskConfig { HotKey = [WinApi.VK_F9], Cd = 500, Params = ["words.txt"] });
             Init(typeof(AutoPaint), new TaskConfig { HotKey = [WinApi.VK_F4], Cd = 100 });
             Init(typeof(DragMouse),
                 new TaskConfig
                 {
-                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_1],
+                    HotKey = [WinApi.VK_SPACE, WinApi.VK_1],
                     Cd = 1,
-                    Params = ["0"]
+                    Params = ["0"],
+                    StopWhenKeyUp=true,
                 },
                 "0");
             Init(typeof(DragMouse),
                 new TaskConfig
                 {
-                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_2],
+                    HotKey = [WinApi.VK_SPACE, WinApi.VK_2],
                     Cd = 1,
-                    Params = ["1"]
+                    Params = ["1"],
+                    StopWhenKeyUp = true,
                 },
                 "1");
             Init(typeof(DragMouse),
                 new TaskConfig
                 {
-                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_3],
+                    HotKey = [WinApi.VK_SPACE, WinApi.VK_3],
                     Cd = 1,
-                    Params = ["2"]
+                    Params = ["2"],
+                    StopWhenKeyUp = true,
                 },
                 "2");
             Init(typeof(DragMouse),
                 new TaskConfig
                 {
-                    HotKey = [WinApi.VK_SHIFT, WinApi.VK_4],
+                    HotKey = [WinApi.VK_SPACE, WinApi.VK_4],
                     Cd = 1,
-                    Params = ["3"]
+                    Params = ["3"],
+                    StopWhenKeyUp = true,
                 },
                 "3");
 
@@ -130,7 +138,7 @@ namespace NewArm
             {
                 if (log.Type == LogType.Start) { res = $"启动 {res}"; dealStart(log.TaskId); }
                 else if (log.Type == LogType.Stop) { res = $"停止 {res}"; dealStop(log.TaskId); }
-                res = $"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}]{log.TaskId} {res}\r\n";
+                res = $"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}][{log.TaskId}]{res}\r\n";
             }));
             printLog(res);
         }
@@ -138,6 +146,7 @@ namespace NewArm
 
         public void printLog(string text)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 int maxlen = 30000;
@@ -148,6 +157,7 @@ namespace NewArm
 
         public void dealStart(string name)
         {
+            if (!windowExist) return;
             if (name == "LeftClicks")
             {
                 button6.BackColor = Color.Red;
@@ -161,6 +171,7 @@ namespace NewArm
 
         public void dealStop(string name)
         {
+            if (!windowExist) return;
             if (name == "LeftClicks")
             {
                 button6.BackColor = Color.Green;
@@ -193,7 +204,8 @@ namespace NewArm
         public void Init(Type task, TaskConfig config = null, string name_tail = "")
         {
             string id = $"{task.Name}{name_tail}";
-            if (config == null) config = new TaskConfig { TaskId = id };
+            if (config == null) config = new TaskConfig();
+            config.TaskId = id;
             if (!timerTasks.ContainsKey(id))
             {
                 timerTasks[id] = (TimerTask)(Activator.CreateInstance(task));
@@ -209,6 +221,7 @@ namespace NewArm
 
         public void Print(string str)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 textBox1.AppendText(str + "\r\n");
@@ -218,6 +231,7 @@ namespace NewArm
 
         public void PrintHotkeyState(Keys[] keys)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 LabelHotkey.Text = string.Join("  ", keys.Select(k => k.ToString()));
@@ -226,6 +240,7 @@ namespace NewArm
 
         public void PrintMouseState(MouseState state)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 StringBuilder sb = new StringBuilder();
@@ -241,6 +256,7 @@ namespace NewArm
 
         public void PrintMouseDPS(double dps)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 labelMouseDPS.Text = $"鼠标DPS={dps:f2}";
@@ -248,6 +264,7 @@ namespace NewArm
         }
         public void PrintKeyboardDPS(double dps)
         {
+            if (!windowExist) return;
             Invoke(new Action(() =>
             {
                 labelKeyDPS.Text = $"键盘DPS={dps:f2}";
@@ -371,6 +388,7 @@ namespace NewArm
         {
             try
             {
+                windowExist = false;
                 //stopHook();
                 //getMousePositionRun = false;
 
@@ -476,7 +494,8 @@ namespace NewArm
 
         private void button6_Click(object sender, EventArgs e)
         {
-            Init(typeof(LeftClicks), new TaskConfig { HotKey = [(ushort)config.actKey], Cd = config.cdTimeMs });
+            updateConfigToUI();
+            //Init(typeof(LeftClicks), new TaskConfig { HotKey = [(ushort)config.actKey], Cd = config.cdTimeMs });
             Trigger(typeof(LeftClicks).Name);
         }
 
@@ -548,11 +567,16 @@ namespace NewArm
                     textBox6.Text = config.actKey.ToString();
                     button6.Text = $"{(config.actMouseLeft ? "左" : "")}{(config.actMouseRight ? "右" : "")}连点（{config.actKey.ToString()}）";
                 }
+
+
+
+                Init(typeof(LeftClicks), new TaskConfig { HotKey = [(ushort)config.actKey], Cd = config.cdTimeMs, Params = [config.actMouseRight ? "right" : "left"] });
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+
         }
 
 

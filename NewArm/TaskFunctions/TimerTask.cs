@@ -27,7 +27,7 @@ namespace NewArm
         public TaskConfig Config;
         private Timer _timer;
 
-        private int _cd_interval = 300;
+        private int _cd_interval = 100;  // 防抖动
         private DateTime _last_trigger_time = DateTime.Now;
 
         //public string[] trigger_Codes;
@@ -196,7 +196,11 @@ namespace NewArm
             }
             if (trigger)
             {
-                if ((DateTime.Now - _last_trigger_time).TotalMilliseconds > _cd_interval)
+                if(isRunning && Config != null && Config.StopWhenKeyUp)
+                {
+                    // pass 持续性动作不需要防抖功能
+                }
+                else if ((DateTime.Now - _last_trigger_time).TotalMilliseconds > _cd_interval)
                 {
                     _last_trigger_time = DateTime.Now;
                     if (isRunning)
@@ -205,7 +209,14 @@ namespace NewArm
                         Start();
                 }
             }
-            //return (IntPtr)0;
+            else
+            {
+                if(isRunning && Config!=null && Config.StopWhenKeyUp)
+                {
+                    Stop();
+                }
+            }
+                //return (IntPtr)0;
             return WinApi.CallNextHookEx((int)_hookId, nCode, (int)wParam, lParam);
         }
     }

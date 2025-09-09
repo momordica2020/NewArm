@@ -48,7 +48,7 @@ namespace NewArm.Core
         ///// <summary>
         ///// 执行间隔
         ///// </summary>
-        public int intervalMs;
+        public int intervalMs = 500;
         private Timer _timer;
 
         private int _cd_interval = 300;
@@ -69,7 +69,9 @@ namespace NewArm.Core
         public MouseStateEvent mouseStateEvent;
         public KeyboardStateEvent keyboardStateEvent;
         public KeyboardDPS keyboardDPS;
-        public MouseDPS mouseDPS; 
+        public MouseDPS mouseDPS;
+        private Queue<double> klastdps = new Queue<double>();
+        private Queue<double> mlastdps = new Queue<double>();
 
         public LogEvent LogReportAction;
         protected void log(Log msg)
@@ -137,7 +139,7 @@ namespace NewArm.Core
             try
             {
                 DateTime now = DateTime.Now;
-                DateTime oneMinuteAgo = now.AddSeconds(-60);
+                DateTime oneMinuteAgo = now.AddSeconds(-1);
 
                 // 移除旧事件
                 while (keyboardEvents.TryPeek(out DateTime time) && time < oneMinuteAgo)
@@ -150,8 +152,17 @@ namespace NewArm.Core
                 int keyboardCount = keyboardEvents.Count; // 注意：Count 可能非原子
                 int mouseCount = mouseEvents.Count;
 
-                if (keyboardDPS!=null) keyboardDPS(keyboardCount / 60.0);
-                if (mouseDPS != null) mouseDPS(mouseCount / 60.0);
+                if (klastdps.Count > 6) klastdps.Dequeue();
+                klastdps.Enqueue(keyboardCount);
+                double kdps = klastdps.Sum() / klastdps.Count;
+
+                if (mlastdps.Count > 6) mlastdps.Dequeue();
+                mlastdps.Enqueue(mouseCount);
+                double mdps = mlastdps.Sum() / mlastdps.Count;
+
+
+                if (keyboardDPS!=null) keyboardDPS(kdps);
+                if (mouseDPS != null) mouseDPS(mdps);
 
                 if (isRunning)
                 {

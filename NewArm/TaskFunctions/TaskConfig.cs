@@ -12,5 +12,6 @@ namespace NewArm.TaskFunctions
         public string[] Params;
         public ushort[] HotKey;
         public int Cd;
+        public bool StopWhenKeyUp = false;
     }
 }

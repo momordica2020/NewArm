@@ -510,7 +510,7 @@ namespace NewArm.Core
         /// 模拟鼠标点击
         /// </summary>
         /// <param name="button">left, right, middle</param>
-        public static void Click(string button = "left", int interval = 10)
+        public static void Click(string button = "left")
         {
             uint downFlag, upFlag;
             switch (button.ToLower())
@@ -565,7 +565,7 @@ namespace NewArm.Core
                 }
             };
             SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
-            Thread.Sleep(interval); // 确保点击生效
+            //Thread.Sleep(interval); // 确保点击生效
         }
 
         /// <summary>

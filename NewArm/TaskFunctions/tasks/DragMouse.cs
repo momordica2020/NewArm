@@ -29,25 +29,27 @@ namespace NewArm.TaskFunctions.tasks
 
         protected override void _work()
         {
-
-            int len = 1000;
+            int step = 10;
+            int len = 300;
             int dx = 0;
             int dy = 0;
-            if (direction == 0) dy = -1000;
-            else if (direction == 1) dx = 1000;
-            else if (direction == 2) dy = 1000;
-            else if (direction == 3) dx = -1000;
-            int step = 25;
+            if (direction == 0) dy = -len;
+            else if (direction == 1) dx = len;
+            else if (direction == 2) dy = len;
+            else if (direction == 3) dx = -len;
+            int ddx = dx / step;
+            int ddy = dy / step;  
             //WinApi.KeyDown(WinApi.VK_SPACE);
             //Thread.Sleep(100);
-            for(int i = 0; i * step < dx; i++)
+            
+            for(int i = 0; i<step; i++)
             {
                 if (!isRunning) break;
-                WinApi.MouseMove(step, 0);
-                Thread.Sleep(1);
+                WinApi.MouseMove(ddx, ddy);
+                Thread.Sleep(10);
             }
             //WinApi.KeyUp(WinApi.VK_SPACE);
-            Stop();
+            //Stop();
             
         }
     }
