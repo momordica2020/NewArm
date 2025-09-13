@@ -29,7 +29,7 @@ namespace NewArm.TaskFunctions.tasks
 
         protected override void _work()
         {
-            int step = 10;
+            int step = 5;
             int len = 300;
             int dx = 0;
             int dy = 0;
@@ -46,7 +46,7 @@ namespace NewArm.TaskFunctions.tasks
             {
                 if (!isRunning) break;
                 WinApi.MouseMove(ddx, ddy);
-                Thread.Sleep(10);
+                Thread.Sleep(30);
             }
             //WinApi.KeyUp(WinApi.VK_SPACE);
             //Stop();
