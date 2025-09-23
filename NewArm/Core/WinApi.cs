@@ -568,6 +568,95 @@ namespace NewArm.Core
             //Thread.Sleep(interval); // 确保点击生效
         }
 
+
+        /// <summary>
+        /// 模拟鼠标点击特定绝对坐标
+        /// </summary>
+        /// <param name="button">left, right, middle</param>
+        public static void Click(string button, Point p)
+        {
+            // 获取屏幕分辨率
+            int screenWidth = (int)GetSystemMetrics(SM_CXSCREEN);
+            int screenHeight = (int)GetSystemMetrics(SM_CYSCREEN);
+
+            // 将像素坐标映射到 0-65535 范围
+            int absoluteX = (p.X * 65535) / screenWidth;
+            int absoluteY = (p.Y * 65535) / screenHeight;
+
+            uint downFlag, upFlag;
+            switch (button.ToLower())
+            {
+                case "right":
+                    downFlag = MOUSEEVENTF_RIGHTDOWN;
+                    upFlag = MOUSEEVENTF_RIGHTUP;
+                    break;
+                case "middle":
+                    downFlag = MOUSEEVENTF_MIDDLEDOWN;
+                    upFlag = MOUSEEVENTF_MIDDLEUP;
+                    break;
+                default: // left
+                    downFlag = MOUSEEVENTF_LEFTDOWN;
+                    upFlag = MOUSEEVENTF_LEFTUP;
+                    break;
+            }
+
+            INPUT[] inputs = new INPUT[3];
+            // 按下
+            inputs[0] = new INPUT
+            {
+                type = INPUT_MOUSE,
+                u = new INPUTUNION
+                {
+                    mi = new MOUSEINPUT
+                    {
+                        dx = absoluteX,
+                        dy = absoluteY,
+                        mouseData = 0,
+                        dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                }
+            };
+            inputs[1] = new INPUT
+            {
+                type = INPUT_MOUSE,
+                u = new INPUTUNION
+                {
+                    mi = new MOUSEINPUT
+                    {
+                        dx = 0,
+                        dy = 0,
+                        mouseData = 0,
+                        dwFlags = downFlag,
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                }
+            };
+            // 释放
+            inputs[2] = new INPUT
+            {
+                type = INPUT_MOUSE,
+                u = new INPUTUNION
+                {
+                    mi = new MOUSEINPUT
+                    {
+                        dx = 0,
+                        dy = 0,
+                        mouseData = 0,
+                        dwFlags = upFlag,
+                        time = 0,
+                        dwExtraInfo = GetMessageExtraInfo()
+                    }
+                }
+            };
+            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            //Thread.Sleep(interval); // 确保点击生效
+        }
+
+
+
         /// <summary>
         /// 模拟鼠标按下
         /// </summary>
@@ -683,15 +772,15 @@ namespace NewArm.Core
         /// </summary>
         /// <param name="x">目标 X 坐标（像素）</param>
         /// <param name="y">目标 Y 坐标（像素）</param>
-        public static void MouseMoveAbsolute(int x, int y)
+        public static void MouseMove(Point p)
         {
             // 获取屏幕分辨率
             int screenWidth = (int)GetSystemMetrics(SM_CXSCREEN);
             int screenHeight = (int)GetSystemMetrics(SM_CYSCREEN);
 
             // 将像素坐标映射到 0-65535 范围
-            int absoluteX = (x * 65535) / screenWidth;
-            int absoluteY = (y * 65535) / screenHeight;
+            int absoluteX = (p.X * 65535) / screenWidth;
+            int absoluteY = (p.Y * 65535) / screenHeight;
 
             INPUT[] inputs = new INPUT[1];
             inputs[0] = new INPUT

@@ -30,7 +30,7 @@ namespace NewArm.TaskFunctions.tasks
             //WinApi.GetDpiScale();
             //WinApi.GetTrueScreenResolution();
             WinApi.Click("left");
-            Thread.Sleep(500);
+            Thread.Sleep(300);
             var targets = ScreenVision.FindTargetsOnScreen(paintArea,WinApi.GetColor(), 3, 5, 35, 5, 35);
             log(Log.Text($"{targets.Count}个点,{WinApi.GetColor().ToString()}"));
             targets = targets.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
@@ -40,8 +40,8 @@ namespace NewArm.TaskFunctions.tasks
                 var screenX = (int)((t.X + paintArea.X) / WinApi.GetDpiScale());
                 var screenY = (int)((t.Y + paintArea.Y) / WinApi.GetDpiScale());
                 //log(LogInfo.Info($"{screenX},{screenY}"));
-                WinApi.MouseMoveAbsolute(screenX, screenY);
-                WinApi.Click("left");
+                //WinApi.MouseMove(new Point(screenX, screenY));
+                WinApi.Click("left",new Point(screenX,screenY));
                 Thread.Sleep(10);
 
 

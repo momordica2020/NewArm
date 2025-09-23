@@ -38,9 +38,6 @@
             删除ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tabControl2 = new System.Windows.Forms.TabControl();
             tabPage4 = new System.Windows.Forms.TabPage();
-            statusStrip1 = new System.Windows.Forms.StatusStrip();
-            LabelHotkey = new System.Windows.Forms.ToolStripStatusLabel();
-            LabelMouse = new System.Windows.Forms.ToolStripStatusLabel();
             button7 = new System.Windows.Forms.Button();
             LogTextbox = new System.Windows.Forms.TextBox();
             panel1 = new System.Windows.Forms.Panel();
@@ -81,13 +78,15 @@
             comboBox2 = new System.Windows.Forms.ComboBox();
             label5 = new System.Windows.Forms.Label();
             textBox2 = new System.Windows.Forms.TextBox();
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            LabelHotkey = new System.Windows.Forms.ToolStripStatusLabel();
+            LabelMouse = new System.Windows.Forms.ToolStripStatusLabel();
             labelMouseDPS = new System.Windows.Forms.ToolStripStatusLabel();
             labelKeyDPS = new System.Windows.Forms.ToolStripStatusLabel();
             contextMenuStrip1.SuspendLayout();
             contextMenuStrip2.SuspendLayout();
             tabControl2.SuspendLayout();
             tabPage4.SuspendLayout();
-            statusStrip1.SuspendLayout();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).BeginInit();
             tabPage5.SuspendLayout();
@@ -96,6 +95,7 @@
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
+            statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // contextMenuStrip1
@@ -156,50 +156,28 @@
             tabControl2.Location = new System.Drawing.Point(0, 0);
             tabControl2.Name = "tabControl2";
             tabControl2.SelectedIndex = 0;
-            tabControl2.Size = new System.Drawing.Size(991, 672);
+            tabControl2.Size = new System.Drawing.Size(1121, 672);
             tabControl2.TabIndex = 19;
             // 
             // tabPage4
             // 
             tabPage4.BackColor = System.Drawing.Color.Transparent;
-            tabPage4.Controls.Add(statusStrip1);
             tabPage4.Controls.Add(button7);
             tabPage4.Controls.Add(LogTextbox);
             tabPage4.Controls.Add(panel1);
             tabPage4.Location = new System.Drawing.Point(4, 30);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            tabPage4.Size = new System.Drawing.Size(983, 638);
+            tabPage4.Size = new System.Drawing.Size(1113, 638);
             tabPage4.TabIndex = 0;
             tabPage4.Text = "基本连点器";
             tabPage4.UseVisualStyleBackColor = true;
             // 
-            // statusStrip1
-            // 
-            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { LabelHotkey, LabelMouse, labelMouseDPS, labelKeyDPS });
-            statusStrip1.Location = new System.Drawing.Point(3, 613);
-            statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(977, 22);
-            statusStrip1.TabIndex = 22;
-            statusStrip1.Text = "statusStrip1";
-            // 
-            // LabelHotkey
-            // 
-            LabelHotkey.Name = "LabelHotkey";
-            LabelHotkey.Size = new System.Drawing.Size(13, 17);
-            LabelHotkey.Text = "-";
-            // 
-            // LabelMouse
-            // 
-            LabelMouse.Name = "LabelMouse";
-            LabelMouse.Size = new System.Drawing.Size(33, 17);
-            LabelMouse.Text = "(0,0)";
-            // 
             // button7
             // 
-            button7.Location = new System.Drawing.Point(714, 49);
+            button7.Location = new System.Drawing.Point(18, 307);
             button7.Name = "button7";
-            button7.Size = new System.Drawing.Size(75, 23);
+            button7.Size = new System.Drawing.Size(96, 37);
             button7.TabIndex = 21;
             button7.Text = "button7";
             button7.UseVisualStyleBackColor = true;
@@ -208,12 +186,12 @@
             // LogTextbox
             // 
             LogTextbox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            LogTextbox.Location = new System.Drawing.Point(18, 387);
+            LogTextbox.Location = new System.Drawing.Point(320, 3);
             LogTextbox.MaxLength = 327670000;
             LogTextbox.Multiline = true;
             LogTextbox.Name = "LogTextbox";
             LogTextbox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            LogTextbox.Size = new System.Drawing.Size(957, 243);
+            LogTextbox.Size = new System.Drawing.Size(787, 607);
             LogTextbox.TabIndex = 20;
             // 
             // panel1
@@ -230,14 +208,14 @@
             panel1.Controls.Add(button6);
             panel1.Location = new System.Drawing.Point(18, 15);
             panel1.Name = "panel1";
-            panel1.Size = new System.Drawing.Size(565, 366);
+            panel1.Size = new System.Drawing.Size(296, 286);
             panel1.TabIndex = 19;
             // 
             // label10
             // 
             label10.AutoSize = true;
             label10.Font = new System.Drawing.Font("宋体", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
-            label10.Location = new System.Drawing.Point(370, 182);
+            label10.Location = new System.Drawing.Point(18, 158);
             label10.Name = "label10";
             label10.Size = new System.Drawing.Size(144, 19);
             label10.TabIndex = 24;
@@ -247,7 +225,7 @@
             // 
             label9.AutoSize = true;
             label9.Font = new System.Drawing.Font("宋体", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
-            label9.Location = new System.Drawing.Point(27, 86);
+            label9.Location = new System.Drawing.Point(18, 34);
             label9.Name = "label9";
             label9.RightToLeft = System.Windows.Forms.RightToLeft.No;
             label9.Size = new System.Drawing.Size(109, 19);
@@ -258,7 +236,7 @@
             // 
             label7.AutoSize = true;
             label7.Font = new System.Drawing.Font("宋体", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
-            label7.Location = new System.Drawing.Point(27, 182);
+            label7.Location = new System.Drawing.Point(18, 130);
             label7.Name = "label7";
             label7.Size = new System.Drawing.Size(109, 19);
             label7.TabIndex = 22;
@@ -268,7 +246,7 @@
             // 
             label8.AutoSize = true;
             label8.Font = new System.Drawing.Font("宋体", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
-            label8.Location = new System.Drawing.Point(27, 133);
+            label8.Location = new System.Drawing.Point(18, 81);
             label8.Name = "label8";
             label8.Size = new System.Drawing.Size(109, 19);
             label8.TabIndex = 21;
@@ -277,10 +255,10 @@
             // textBox6
             // 
             textBox6.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            textBox6.Location = new System.Drawing.Point(153, 130);
+            textBox6.Location = new System.Drawing.Point(133, 78);
             textBox6.Name = "textBox6";
             textBox6.ReadOnly = true;
-            textBox6.Size = new System.Drawing.Size(359, 29);
+            textBox6.Size = new System.Drawing.Size(158, 29);
             textBox6.TabIndex = 20;
             textBox6.KeyDown += textBox6_KeyDown;
             textBox6.KeyUp += textBox6_KeyUp;
@@ -288,7 +266,7 @@
             // checkBox2
             // 
             checkBox2.AutoSize = true;
-            checkBox2.Location = new System.Drawing.Point(237, 79);
+            checkBox2.Location = new System.Drawing.Point(205, 34);
             checkBox2.Name = "checkBox2";
             checkBox2.Size = new System.Drawing.Size(61, 25);
             checkBox2.TabIndex = 19;
@@ -299,7 +277,7 @@
             // checkBox1
             // 
             checkBox1.AutoSize = true;
-            checkBox1.Location = new System.Drawing.Point(153, 79);
+            checkBox1.Location = new System.Drawing.Point(133, 34);
             checkBox1.Name = "checkBox1";
             checkBox1.Size = new System.Drawing.Size(61, 25);
             checkBox1.TabIndex = 18;
@@ -311,11 +289,11 @@
             // 
             numericUpDown2.BorderStyle = System.Windows.Forms.BorderStyle.None;
             numericUpDown2.Font = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 134);
-            numericUpDown2.Location = new System.Drawing.Point(153, 182);
+            numericUpDown2.Location = new System.Drawing.Point(133, 124);
             numericUpDown2.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             numericUpDown2.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
             numericUpDown2.Name = "numericUpDown2";
-            numericUpDown2.Size = new System.Drawing.Size(153, 25);
+            numericUpDown2.Size = new System.Drawing.Size(121, 25);
             numericUpDown2.TabIndex = 14;
             numericUpDown2.Value = new decimal(new int[] { 50, 0, 0, 0 });
             numericUpDown2.ValueChanged += numericUpDown2_ValueChanged;
@@ -324,7 +302,7 @@
             // 
             label6.AutoSize = true;
             label6.Font = new System.Drawing.Font("宋体", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
-            label6.Location = new System.Drawing.Point(325, 182);
+            label6.Location = new System.Drawing.Point(260, 130);
             label6.Name = "label6";
             label6.Size = new System.Drawing.Size(31, 19);
             label6.TabIndex = 17;
@@ -335,7 +313,7 @@
             button6.BackColor = System.Drawing.Color.FromArgb(255, 128, 0);
             button6.Font = new System.Drawing.Font("黑体", 22F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, 134);
             button6.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            button6.Location = new System.Drawing.Point(31, 240);
+            button6.Location = new System.Drawing.Point(18, 181);
             button6.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             button6.Name = "button6";
             button6.Size = new System.Drawing.Size(236, 80);
@@ -358,7 +336,7 @@
             tabPage5.Location = new System.Drawing.Point(4, 30);
             tabPage5.Name = "tabPage5";
             tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            tabPage5.Size = new System.Drawing.Size(983, 638);
+            tabPage5.Size = new System.Drawing.Size(1113, 638);
             tabPage5.TabIndex = 1;
             tabPage5.Text = "宏设计";
             tabPage5.UseVisualStyleBackColor = true;
@@ -624,6 +602,27 @@
             textBox2.Size = new System.Drawing.Size(151, 29);
             textBox2.TabIndex = 26;
             // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { LabelHotkey, LabelMouse, labelMouseDPS, labelKeyDPS });
+            statusStrip1.Location = new System.Drawing.Point(0, 650);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new System.Drawing.Size(1121, 22);
+            statusStrip1.TabIndex = 22;
+            statusStrip1.Text = "statusStrip1";
+            // 
+            // LabelHotkey
+            // 
+            LabelHotkey.Name = "LabelHotkey";
+            LabelHotkey.Size = new System.Drawing.Size(13, 17);
+            LabelHotkey.Text = "-";
+            // 
+            // LabelMouse
+            // 
+            LabelMouse.Name = "LabelMouse";
+            LabelMouse.Size = new System.Drawing.Size(33, 17);
+            LabelMouse.Text = "(0,0)";
+            // 
             // labelMouseDPS
             // 
             labelMouseDPS.Name = "labelMouseDPS";
@@ -640,8 +639,8 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            BackColor = System.Drawing.Color.LightSteelBlue;
-            ClientSize = new System.Drawing.Size(991, 672);
+            ClientSize = new System.Drawing.Size(1121, 672);
+            Controls.Add(statusStrip1);
             Controls.Add(tabControl2);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
@@ -655,8 +654,6 @@
             tabControl2.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
-            statusStrip1.ResumeLayout(false);
-            statusStrip1.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown2).EndInit();
@@ -670,7 +667,10 @@
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).EndInit();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
