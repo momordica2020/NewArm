@@ -388,6 +388,7 @@ namespace NewArm
         {
             try
             {
+                monitor.Stop();
                 windowExist = false;
                 //stopHook();
                 //getMousePositionRun = false;

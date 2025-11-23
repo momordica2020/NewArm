@@ -85,21 +85,16 @@ namespace NewArm.Core
         public KeysMonitor()
         {
             isRunning = false;
-            //_cts = new CancellationTokenSource();
-            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
             _keyboardProcDelegate = KeyboardProc; // 保存委托引用
             _mouseProcDelegate = MouseProc; // 保存委托引用
-
-            using (var curProcess = System.Diagnostics.Process.GetCurrentProcess())
-            using (var curModule = curProcess.MainModule)
-            {
-                _hookKeyId = WinApi.SetWindowsHookEx(WinApi.WH_KEYBOARD_LL, _keyboardProcDelegate, WinApi.GetModuleHandle(curModule.ModuleName), 0);
-                _hookMouseId = WinApi.SetWindowsHookEx(WinApi.WH_MOUSE_LL, _mouseProcDelegate, WinApi.GetModuleHandle(curModule.ModuleName), 0);
-
-            }
+            _timer = new Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
         }
         public void Start()
         {
+
+
+
+
             if (isRunning)
             {
                 //log(Log.Text("任务已在运行"));
@@ -108,6 +103,18 @@ namespace NewArm.Core
 
             try
             {
+
+
+                //_cts = new CancellationTokenSource();
+                using (var curProcess = System.Diagnostics.Process.GetCurrentProcess())
+                using (var curModule = curProcess.MainModule)
+                {
+                    _hookKeyId = WinApi.SetWindowsHookEx(WinApi.WH_KEYBOARD_LL, _keyboardProcDelegate, WinApi.GetModuleHandle(curModule.ModuleName), 0);
+                    _hookMouseId = WinApi.SetWindowsHookEx(WinApi.WH_MOUSE_LL, _mouseProcDelegate, WinApi.GetModuleHandle(curModule.ModuleName), 0);
+
+                }
+
+
                 // 启动定时器
                 isRunning = true;
                 _timer.Change(intervalMs, Timeout.Infinite);
@@ -128,6 +135,18 @@ namespace NewArm.Core
 
             _timer.Change(Timeout.Infinite, Timeout.Infinite);
             isRunning = false;
+
+
+            if (_hookKeyId != IntPtr.Zero)
+            {
+                WinApi.UnhookWindowsHookEx(_hookKeyId);
+                _hookKeyId = IntPtr.Zero;
+            }
+            if (_hookMouseId != IntPtr.Zero)
+            {
+                WinApi.UnhookWindowsHookEx(_hookMouseId);
+                _hookMouseId = IntPtr.Zero;
+            }
 
             //log(Log.Stop);
         }

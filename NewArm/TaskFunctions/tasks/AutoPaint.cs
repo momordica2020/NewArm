@@ -31,7 +31,7 @@ namespace NewArm.TaskFunctions.tasks
             //WinApi.GetTrueScreenResolution();
             WinApi.Click("left");
             Thread.Sleep(300);
-            var targets = ScreenVision.FindTargetsOnScreen(paintArea,WinApi.GetColor(), 3, 5, 35, 5, 35);
+            var targets = ScreenVision.FindTargetsOnScreen(paintArea,WinApi.GetColor(), 3, 5, 25, 5, 25);
             log(Log.Text($"{targets.Count}个点,{WinApi.GetColor().ToString()}"));
             targets = targets.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
             foreach (var t in targets)
